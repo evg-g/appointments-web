@@ -4,13 +4,16 @@ Read this before changing anything in this repo.
 
 ## What this repo is
 
-React 19 + TypeScript (strict) front end for Aurora Clinic, built with Vite.
+React 19 + TypeScript (strict) front end for Aurora Clinic, built with Vite and Tailwind v4.
+Server state via TanStack Query v5; routing via React Router v7; forms via React Hook Form + Zod;
+Radix UI primitives; MSW for network mocking; Storybook for the component workshop.
 
 ## Rules
 
 - `tsc --noEmit` and ESLint must pass. No `any`. No non-null `!` without a justifying comment.
-- The API client is **generated** from the backend `openapi.json` (from milestone 12) —
-  hand-written request types are forbidden.
+- The API client is **generated** from the backend `openapi.json` (`src/api/schema.d.ts` via
+  `openapi-typescript`; typed client in `src/api/client.ts`) — hand-written request types are
+  forbidden. Run `make check-client` after the contract changes.
 - Network is mocked at the network layer with MSW, shared between Vitest, Storybook, and the
   dev server. No hand-rolled `fetch` mocks.
 - Every async surface has four designed states: loading (skeleton), empty (with a next
@@ -23,7 +26,11 @@ React 19 + TypeScript (strict) front end for Aurora Clinic, built with Vite.
 
 ```bash
 make setup / make dev / make test / make lint / make fix / make ci-local
+make storybook / make build-storybook      # component workshop
+make vendor-contract / make check-client   # regenerate + drift-gate the API client
 ```
+
+Run the dev server with mock data: `VITE_ENABLE_MSW=true npm run dev` (seed logins in README).
 
 ## Testing
 

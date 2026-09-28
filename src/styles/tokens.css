@@ -1,0 +1,281 @@
+/*
+ * Design tokens — the single source of truth for every visual value in the app.
+ *
+ * Two layers:
+ *   1. Primitive scales (spacing, radii, type, motion, raw color ramps). These never change
+ *      between themes. Components do NOT consume the raw color ramps directly.
+ *   2. Semantic tokens (--color-bg, --color-text, --color-accent, ...). These are what
+ *      components consume, and they flip between light and dark.
+ *
+ * Theme selection:
+ *   - Default follows the OS via `prefers-color-scheme`.
+ *   - A user override sets `data-theme="light"` or `data-theme="dark"` on <html>, which wins.
+ *   See src/theme/ for the provider that writes that attribute.
+ *
+ * Rule (enforced by review, see CLAUDE.md): components use these tokens — never raw hex or
+ * arbitrary pixel values.
+ */
+
+:root {
+  /* ---- Primitive color ramps (not consumed directly by components) ---- */
+  --slate-0: #ffffff;
+  --slate-25: #fbfcfd;
+  --slate-50: #f6f8fa;
+  --slate-100: #eceff3;
+  --slate-200: #dfe3ea;
+  --slate-300: #c7cedb;
+  --slate-400: #9aa4b7;
+  --slate-500: #6b7688;
+  --slate-600: #4d5769;
+  --slate-700: #37404f;
+  --slate-800: #232b38;
+  --slate-900: #161c26;
+  --slate-950: #0d121b;
+  --slate-1000: #070a10;
+
+  /* Single brand accent — a clinical teal. */
+  --accent-50: #e6f6f6;
+  --accent-100: #c2eae9;
+  --accent-200: #8fd7d6;
+  --accent-300: #57bfbe;
+  --accent-400: #2ca6a6;
+  --accent-500: #128a8b;
+  --accent-600: #0d7071;
+  --accent-700: #0b595b;
+  --accent-800: #0b4547;
+  --accent-900: #0a383a;
+
+  /* Status ramps (semantic-only: success/warning/danger/info). */
+  --green-100: #d6f2df;
+  --green-300: #7fd39b;
+  --green-500: #1f9d57;
+  --green-600: #178048;
+  --green-700: #12653a;
+  --amber-100: #fbeecb;
+  --amber-300: #f2cf72;
+  --amber-500: #cf9a1b;
+  --amber-600: #a97c12;
+  --amber-700: #86620f;
+  --red-100: #fbdcdc;
+  --red-300: #f09a9a;
+  --red-500: #d63b3b;
+  --red-600: #b52a2a;
+  --red-700: #8f2020;
+  --blue-100: #d8e6fb;
+  --blue-300: #93b8f2;
+  --blue-500: #2f6fd6;
+  --blue-600: #2358ad;
+  --blue-700: #1a4488;
+
+  /* ---- Type scale ---- */
+  --font-sans:
+    "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Menlo", "Consolas", monospace;
+
+  --text-xs: 0.75rem; /* 12 */
+  --text-sm: 0.875rem; /* 14 */
+  --text-base: 1rem; /* 16 */
+  --text-lg: 1.125rem; /* 18 */
+  --text-xl: 1.375rem; /* 22 */
+  --text-2xl: 1.75rem; /* 28 */
+  --text-3xl: 2.25rem; /* 36 */
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.55;
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --tracking-tight: -0.014em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+
+  /* Measure (optimal line length for body copy). */
+  --measure: 68ch;
+
+  /* ---- Spacing — 4px base, 8px rhythm ---- */
+  --space-0: 0;
+  --space-px: 1px;
+  --space-1: 0.25rem; /* 4 */
+  --space-2: 0.5rem; /* 8 */
+  --space-3: 0.75rem; /* 12 */
+  --space-4: 1rem; /* 16 */
+  --space-5: 1.5rem; /* 24 */
+  --space-6: 2rem; /* 32 */
+  --space-7: 3rem; /* 48 */
+  --space-8: 4rem; /* 64 */
+  --space-9: 6rem; /* 96 */
+
+  /* ---- Radii ---- */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+
+  /* ---- Motion ---- */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.3, 0, 0, 1);
+
+  /* ---- Z-index ---- */
+  --z-base: 0;
+  --z-sticky: 100;
+  --z-overlay: 800;
+  --z-modal: 900;
+  --z-toast: 1000;
+
+  /* ============================================================
+   * Semantic tokens — LIGHT theme (default).
+   * ============================================================ */
+  --color-bg: var(--slate-50);
+  --color-surface: var(--slate-0);
+  --color-surface-raised: var(--slate-0);
+  --color-surface-sunken: var(--slate-100);
+  --color-overlay: rgb(13 18 27 / 0.44);
+
+  --color-border: var(--slate-200);
+  --color-border-strong: var(--slate-300);
+
+  --color-text: var(--slate-900);
+  --color-text-muted: var(--slate-600);
+  --color-text-subtle: var(--slate-500);
+  --color-text-inverse: var(--slate-0);
+
+  --color-accent: var(--accent-600);
+  --color-accent-hover: var(--accent-700);
+  --color-accent-active: var(--accent-800);
+  --color-accent-fg: var(--slate-0);
+  --color-accent-subtle: var(--accent-50);
+  --color-accent-subtle-fg: var(--accent-700);
+
+  --color-focus-ring: var(--accent-400);
+
+  --color-success: var(--green-600);
+  --color-success-bg: var(--green-100);
+  --color-success-fg: var(--green-700);
+  --color-warning: var(--amber-600);
+  --color-warning-bg: var(--amber-100);
+  --color-warning-fg: var(--amber-700);
+  --color-danger: var(--red-600);
+  --color-danger-bg: var(--red-100);
+  --color-danger-fg: var(--red-700);
+  --color-info: var(--blue-600);
+  --color-info-bg: var(--blue-100);
+  --color-info-fg: var(--blue-700);
+
+  /* Skeleton shimmer stops. */
+  --color-skeleton-base: var(--slate-100);
+  --color-skeleton-sheen: var(--slate-200);
+
+  /* ---- Elevation (depends on theme; defined per theme below is overkill — kept subtle) ---- */
+  --shadow-sm: 0 1px 2px rgb(13 18 27 / 0.06);
+  --shadow-md: 0 2px 4px rgb(13 18 27 / 0.06), 0 4px 12px rgb(13 18 27 / 0.08);
+  --shadow-lg: 0 8px 24px rgb(13 18 27 / 0.12), 0 2px 6px rgb(13 18 27 / 0.08);
+
+  color-scheme: light;
+}
+
+/* Dark theme applied by the OS, unless the user forced light. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: var(--slate-950);
+    --color-surface: var(--slate-900);
+    --color-surface-raised: var(--slate-800);
+    --color-surface-sunken: var(--slate-1000);
+    --color-overlay: rgb(0 0 0 / 0.6);
+
+    --color-border: var(--slate-800);
+    --color-border-strong: var(--slate-700);
+
+    --color-text: var(--slate-100);
+    --color-text-muted: var(--slate-400);
+    --color-text-subtle: var(--slate-500);
+    --color-text-inverse: var(--slate-950);
+
+    --color-accent: var(--accent-400);
+    --color-accent-hover: var(--accent-300);
+    --color-accent-active: var(--accent-200);
+    --color-accent-fg: var(--slate-950);
+    --color-accent-subtle: var(--accent-900);
+    --color-accent-subtle-fg: var(--accent-200);
+
+    --color-focus-ring: var(--accent-400);
+
+    --color-success: var(--green-300);
+    --color-success-bg: color-mix(in srgb, var(--green-500) 22%, transparent);
+    --color-success-fg: var(--green-300);
+    --color-warning: var(--amber-300);
+    --color-warning-bg: color-mix(in srgb, var(--amber-500) 22%, transparent);
+    --color-warning-fg: var(--amber-300);
+    --color-danger: var(--red-300);
+    --color-danger-bg: color-mix(in srgb, var(--red-500) 24%, transparent);
+    --color-danger-fg: var(--red-300);
+    --color-info: var(--blue-300);
+    --color-info-bg: color-mix(in srgb, var(--blue-500) 24%, transparent);
+    --color-info-fg: var(--blue-300);
+
+    --color-skeleton-base: var(--slate-800);
+    --color-skeleton-sheen: var(--slate-700);
+
+    --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-md: 0 2px 4px rgb(0 0 0 / 0.4), 0 4px 12px rgb(0 0 0 / 0.5);
+    --shadow-lg: 0 8px 24px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.5);
+
+    color-scheme: dark;
+  }
+}
+
+/* Dark theme forced by the user, regardless of OS. Mirror of the block above. */
+:root[data-theme="dark"] {
+  --color-bg: var(--slate-950);
+  --color-surface: var(--slate-900);
+  --color-surface-raised: var(--slate-800);
+  --color-surface-sunken: var(--slate-1000);
+  --color-overlay: rgb(0 0 0 / 0.6);
+
+  --color-border: var(--slate-800);
+  --color-border-strong: var(--slate-700);
+
+  --color-text: var(--slate-100);
+  --color-text-muted: var(--slate-400);
+  --color-text-subtle: var(--slate-500);
+  --color-text-inverse: var(--slate-950);
+
+  --color-accent: var(--accent-400);
+  --color-accent-hover: var(--accent-300);
+  --color-accent-active: var(--accent-200);
+  --color-accent-fg: var(--slate-950);
+  --color-accent-subtle: var(--accent-900);
+  --color-accent-subtle-fg: var(--accent-200);
+
+  --color-focus-ring: var(--accent-400);
+
+  --color-success: var(--green-300);
+  --color-success-bg: color-mix(in srgb, var(--green-500) 22%, transparent);
+  --color-success-fg: var(--green-300);
+  --color-warning: var(--amber-300);
+  --color-warning-bg: color-mix(in srgb, var(--amber-500) 22%, transparent);
+  --color-warning-fg: var(--amber-300);
+  --color-danger: var(--red-300);
+  --color-danger-bg: color-mix(in srgb, var(--red-500) 24%, transparent);
+  --color-danger-fg: var(--red-300);
+  --color-info: var(--blue-300);
+  --color-info-bg: color-mix(in srgb, var(--blue-500) 24%, transparent);
+  --color-info-fg: var(--blue-300);
+
+  --color-skeleton-base: var(--slate-800);
+  --color-skeleton-sheen: var(--slate-700);
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 2px 4px rgb(0 0 0 / 0.4), 0 4px 12px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 8px 24px rgb(0 0 0 / 0.6), 0 2px 6px rgb(0 0 0 / 0.5);
+
+  color-scheme: dark;
+}

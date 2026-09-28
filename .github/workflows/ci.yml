@@ -54,6 +54,21 @@ jobs:
       - run: npm ci
       - run: npm run test:coverage
 
+  contract:
+    name: API client drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # Regenerate the client from the committed contract and fail if it differs from what is
+      # committed — the web side of the cross-repo contract gate (spec §8.3).
+      - run: npm run check:client
+
   build:
     name: build + bundle size
     runs-on: ubuntu-latest
@@ -70,3 +85,16 @@ jobs:
         run: |
           echo "### Bundle size" >> "$GITHUB_STEP_SUMMARY"
           du -sh dist >> "$GITHUB_STEP_SUMMARY"
+
+  storybook:
+    name: build storybook
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build:storybook

@@ -2,10 +2,20 @@ import js from "@eslint/js";
 import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
+import storybook from "eslint-plugin-storybook";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", "coverage", "node_modules"] },
+  {
+    ignores: [
+      "dist",
+      "coverage",
+      "storybook-static",
+      "node_modules",
+      "src/api/schema.d.ts",
+      "public/mockServiceWorker.js",
+    ],
+  },
   {
     files: ["**/*.{ts,tsx}"],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
@@ -23,4 +33,6 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "error",
     },
   },
+  // Storybook's recommended flat config (lints story files).
+  ...storybook.configs["flat/recommended"],
 );

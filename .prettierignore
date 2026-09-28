@@ -2,3 +2,11 @@ dist
 coverage
 node_modules
 package-lock.json
+storybook-static
+
+# Generated from the API contract — never hand-formatted (drift check compares exact output).
+src/api/schema.d.ts
+contracts/openapi.json
+
+# MSW-managed worker script.
+public/mockServiceWorker.js

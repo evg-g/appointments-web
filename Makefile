@@ -2,7 +2,8 @@
 
 .DEFAULT_GOAL := help
 
-.PHONY: help setup dev build test lint fix typecheck ci-local clean
+.PHONY: help setup dev build test lint fix typecheck ci-local clean \
+	generate-client vendor-contract check-client storybook build-storybook
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -31,7 +32,22 @@ fix: ## Auto-fix lint issues and format
 typecheck: ## Type check without emitting
 	npm run typecheck
 
-ci-local: lint typecheck test ## Run the full PR gate set locally
+generate-client: ## Regenerate the typed API client from contracts/openapi.json
+	npm run generate:client
+
+vendor-contract: ## Copy the API's openapi.json here and regenerate the client
+	npm run vendor:contract
+
+check-client: ## Drift gate: fail if the committed client is stale vs the contract
+	npm run check:client
+
+storybook: ## Run the Storybook component workshop
+	npm run storybook
+
+build-storybook: ## Build the static Storybook site
+	npm run build:storybook
+
+ci-local: lint typecheck test check-client ## Run the full PR gate set locally
 
 clean: ## Remove build artifacts and caches
-	rm -rf dist coverage node_modules/.vite
+	rm -rf dist coverage storybook-static node_modules/.vite

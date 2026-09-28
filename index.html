@@ -3,7 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="description"
+      content="Aurora Clinic — appointment scheduling and medication cold-chain monitoring."
+    />
     <title>Aurora Clinic</title>
+    <!--
+      No-FOUC theme bootstrap: pin the stored preference onto <html> before the first paint,
+      so a user who chose dark never flashes light. `system` leaves the attribute off and lets
+      the CSS prefers-color-scheme query decide. Mirrors src/theme/theme.ts.
+    -->
+    <script>
+      (function () {
+        try {
+          var pref = localStorage.getItem("aurora.theme");
+          if (pref === "light" || pref === "dark") {
+            document.documentElement.setAttribute("data-theme", pref);
+          }
+        } catch (e) {
+          /* localStorage unavailable — fall back to the OS preference. */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
