@@ -3,6 +3,7 @@ node_modules/
 
 # Build output
 dist/
+dist-e2e/
 dist-ssr/
 storybook-static/
 *.local
@@ -10,6 +11,14 @@ storybook-static/
 # Test / coverage
 coverage/
 .vitest/
+
+# Browser test artifacts (baselines under e2e/**/*-snapshots ARE committed)
+playwright-report/
+test-results/
+lighthouse-report/
+.lighthouseci/
+# Stray temp dirs LHCI/Chrome can create under a Windows-interop env in WSL.
+C:*
 
 # Env
 .env

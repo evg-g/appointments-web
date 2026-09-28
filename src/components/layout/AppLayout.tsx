@@ -1,9 +1,11 @@
 import { Activity } from "lucide-react";
+import { Suspense } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
 import { useAuth } from "@/auth/useAuth";
 import { ThemeToggle } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { RouteFallback } from "@/routes/RouteFallback";
 
 import { UserMenu } from "./UserMenu";
 import { visibleNavItems } from "./nav";
@@ -77,7 +79,10 @@ export function AppLayout() {
       </header>
 
       <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl px-4 py-6">
-        <Outlet />
+        {/* One boundary for every lazily-loaded page below; nested layouts add their own. */}
+        <Suspense fallback={<RouteFallback />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

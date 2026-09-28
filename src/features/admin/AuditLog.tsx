@@ -117,7 +117,9 @@ export function AuditLog() {
                     </TD>
                     <TD>
                       <span className="text-fg">{entry.entity_type}</span>
-                      <span className="ml-1 text-subtle">{entry.entity_id.slice(0, 8)}</span>
+                      {/* text-muted, not text-subtle: this id is meaningful content and must meet
+                          WCAG AA contrast (the a11y gate caught text-subtle at 4.08:1). */}
+                      <span className="ml-1 text-muted">{entry.entity_id.slice(0, 8)}</span>
                     </TD>
                     <TD className="text-muted">{entry.actor_id?.slice(0, 8) ?? "system"}</TD>
                   </TR>

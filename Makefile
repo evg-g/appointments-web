@@ -3,7 +3,8 @@
 .DEFAULT_GOAL := help
 
 .PHONY: help setup dev build test lint fix typecheck ci-local clean \
-	generate-client vendor-contract check-client storybook build-storybook
+	generate-client vendor-contract check-client storybook build-storybook \
+	setup-e2e e2e e2e-a11y e2e-visual e2e-update-snapshots bundle-check lighthouse
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -49,5 +50,31 @@ build-storybook: ## Build the static Storybook site
 
 ci-local: lint typecheck test check-client ## Run the full PR gate set locally
 
+# ---- Browser test tiers (milestone 14) ---------------------------------------------------------
+# These need the Playwright Chromium browser. On a corporate network see docs/BROWSER_TESTING.md:
+# the download needs NODE_EXTRA_CA_CERTS and Chromium needs a few system libs.
+
+setup-e2e: ## Install the Playwright Chromium browser (add --with-deps in CI for system libs)
+	npx playwright install chromium
+
+e2e: ## Playwright E2E journeys + a11y + visual (Chromium; builds the MSW app and previews it)
+	npm run e2e
+
+e2e-a11y: ## axe accessibility sweep — every route, light + dark, zero serious/critical
+	npm run e2e:a11y
+
+e2e-visual: ## Visual regression — key pages, light + dark
+	npm run e2e:visual
+
+e2e-update-snapshots: ## Regenerate the committed visual baselines
+	npm run e2e:update-snapshots
+
+bundle-check: build ## Enforce the gzipped bundle-size budget on the production build
+	npm run bundle:check
+
+lighthouse: build ## Run Lighthouse budgets (LCP/CLS/TBT) against the production build
+	npm run lighthouse
+
 clean: ## Remove build artifacts and caches
-	rm -rf dist coverage storybook-static node_modules/.vite
+	rm -rf dist dist-e2e coverage storybook-static playwright-report test-results \
+		lighthouse-report .lighthouseci node_modules/.vite

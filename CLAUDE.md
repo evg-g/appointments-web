@@ -36,4 +36,10 @@ Run the dev server with mock data: `VITE_ENABLE_MSW=true npm run dev` (seed logi
 
 - Unit: Vitest (hooks, formatters, schemas).
 - Component: Vitest + Testing Library + MSW; query by role/label.
-- E2E: Playwright against the composed stack (from milestone 14).
+- E2E / a11y / visual: Playwright under `e2e/` (milestone 14). The specs drive the real build served
+  by `vite preview` with the app's MSW backend (`VITE_ENABLE_MSW=true`) — deterministic, no Docker.
+  `make e2e` runs journeys + a11y + visual; `make e2e-update-snapshots` regenerates visual baselines
+  (Chromium-on-Linux, committed). Force error states through the MSW `scenarios` map, never a
+  hand-rolled mock. Running against the composed stack is milestone 15. See
+  `docs/BROWSER_TESTING.md` + ADR 0006.
+- Budgets: `make bundle-check` (gzipped JS) and `make lighthouse` (LCP/CLS/TBT) — enforced in CI.

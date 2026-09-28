@@ -59,7 +59,19 @@ export function resetMockState(): void {
 function bearerUser(request: Request): UserOut | null {
   const header = request.headers.get("Authorization");
   if (header === null || !header.startsWith("Bearer ")) return null;
-  return accessTokens.get(header.slice("Bearer ".length)) ?? null;
+  const token = header.slice("Bearer ".length);
+  const known = accessTokens.get(token);
+  if (known !== undefined) return known;
+  // Fallback: our tokens encode the role (see issueTokens). A full page reload loses the in-memory
+  // map but keeps the token in localStorage, so this lets a session survive real navigations —
+  // which the browser E2E suite relies on to visit any route directly. There is exactly one seed
+  // account per role, so the role uniquely identifies the user.
+  const match = /^mock-access-([A-Z_]+)-\d+$/.exec(token);
+  if (match !== null) {
+    const account = SEED_ACCOUNTS.find((a) => a.user.role === match[1]);
+    if (account !== undefined) return account.user;
+  }
+  return null;
 }
 
 interface PageOut<T> {

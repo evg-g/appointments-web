@@ -14,6 +14,22 @@ API client is generated from the backend's OpenAPI schema rather than hand-writt
 
 ## Status
 
+Milestone 14 (browser test tiers + performance budgets) complete:
+
+- **Playwright E2E** (`e2e/journeys/`) — login, book, transition/confirm, cancel, authorization
+  denial, and forced error + empty states. The specs drive the real production build served by
+  `vite preview`, with the app's own typed MSW backend supplying `/api/v1` (deterministic, no
+  Docker). Running them against the composed stack is milestone 15.
+- **Accessibility** (`e2e/a11y/`) — `@axe-core/playwright` sweeps every route in light and dark;
+  zero serious/critical violations, enforced. (It caught and we fixed a real WCAG AA contrast bug.)
+- **Visual regression** (`e2e/visual/`) — Playwright screenshots of the key pages, light + dark,
+  made deterministic with a frozen clock and pinned locale/timezone.
+- **Performance budgets** — the app was code-split (route-level `React.lazy` + vendor chunks), taking
+  initial JS to ≈ 184 kB gzipped. A bundle-size gate (`scripts/check-bundle-size.mjs`) and Lighthouse
+  budgets (LCP/CLS/TBT — currently LCP ≈ 0.6 s, CLS 0, TBT 0, performance 1.0) are enforced in CI.
+
+See [ADR 0006](docs/adr/0006-browser-test-tiers.md) and [docs/BROWSER_TESTING.md](docs/BROWSER_TESTING.md).
+
 Milestone 13 (web features) complete — the full product surface on the foundation:
 
 - **Calendar / week view** (`src/features/calendar/`) — a clinician's open slots across a week,
@@ -65,6 +81,12 @@ make dev               # start Vite on http://localhost:5173
 make test              # run Vitest
 make storybook         # component workshop on http://localhost:6006
 make ci-local          # lint + typecheck + test + client drift check
+
+# Browser tiers (milestone 14) — need the Playwright Chromium browser:
+make setup-e2e         # install Chromium
+make e2e               # E2E journeys + a11y + visual (builds the MSW app and previews it)
+make bundle-check      # enforce the gzipped bundle-size budget
+make lighthouse        # LCP/CLS/TBT budgets against the prod build
 ```
 
 Seed logins for the mock/dev server (`VITE_ENABLE_MSW=true npm run dev`), all with password

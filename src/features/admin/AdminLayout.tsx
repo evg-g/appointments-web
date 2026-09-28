@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
 import { PageHeader } from "@/components/layout/PageHeader";
 import { cn } from "@/lib/cn";
+import { RouteFallback } from "@/routes/RouteFallback";
 
 const TABS = [
   { to: "/admin/clinics", label: "Clinics" },
@@ -35,7 +37,10 @@ export function AdminLayout() {
           </NavLink>
         ))}
       </nav>
-      <Outlet />
+      {/* Keep the header and tabs on screen while a tab's own chunk loads. */}
+      <Suspense fallback={<RouteFallback />}>
+        <Outlet />
+      </Suspense>
     </>
   );
 }
