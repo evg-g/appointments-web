@@ -1,0 +1,31 @@
+# Production-shaped fallback for the web tier, so the delivery pipeline is runnable without a cloud
+# account. Azure Container Apps is the primary target (infra/main.bicep); this file runs the
+# published, immutable web image anywhere there is a Docker host.
+#
+# The web container serves the SPA and reverse-proxies /api and /health to whatever API_UPSTREAM
+# points at — typically the API from appointments-api/docker-compose.prod.yml running on the same
+# Docker network. Put both on one network and set API_UPSTREAM to the API service name:port.
+#
+# Usage:
+#   export WEB_IMAGE=ghcr.io/evg-g/appointments-web:1.2.3
+#   export API_UPSTREAM=appointments-api:8000
+#   docker compose -f docker-compose.prod.yml up -d
+
+services:
+  web:
+    image: ${WEB_IMAGE:?WEB_IMAGE is required, e.g. ghcr.io/evg-g/appointments-web:1.2.3}
+    environment:
+      API_UPSTREAM: ${API_UPSTREAM:?API_UPSTREAM is required, e.g. appointments-api:8000}
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M

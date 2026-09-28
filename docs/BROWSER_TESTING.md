@@ -58,7 +58,36 @@ separate server is needed.
 
 ## CI
 
-`.github/workflows/ci.yml` runs three jobs for these tiers: `build` (bundle budget), `e2e`
-(journeys + a11y + visual on Chromium, plus a WebKit shard via `PW_ALL_BROWSERS=1`), and
-`lighthouse`. Reports, traces, and videos upload as artifacts. Running the journeys against the fully
-composed stack (real API) is milestone 15.
+`.github/workflows/ci.yml` runs, for these tiers: `build` (bundle budget), `e2e` (journeys + a11y +
+visual on Chromium, plus a WebKit shard via `PW_ALL_BROWSERS=1`), `lighthouse`, and — added in
+milestone 15 — `e2e-composed` (the journeys against the real stack, below). Reports, traces, and
+videos upload as artifacts.
+
+## Composed-stack E2E (milestone 15)
+
+The same journeys, driven against the **real** backend instead of MSW: `docker-compose.e2e.yml`
+brings up Postgres + Redis + the API + the nginx web tier (which serves the built SPA and
+reverse-proxies `/api` on the same origin), `scripts/seed-e2e.mjs` provisions the demo graph over the
+public API, and `playwright.composed.config.ts` runs the specs at `http://localhost:8080`.
+
+```bash
+# WSL (Ubuntu-24.04), Docker running, sibling appointments-api checked out at ../appointments-api
+make e2e-composed-all      # build images -> up -> seed -> run journeys -> tear down
+# or, step by step:
+make compose-e2e-up        # build the API + web images and start the stack (waits for health)
+make seed-e2e              # provision "Aurora Downtown" + the accounts over the API
+make e2e-composed          # npm run e2e:composed
+make compose-e2e-down      # stop + remove volumes
+```
+
+The **spec files are unchanged** from the MSW tier. Only `e2e/support/helpers.ts` branches on
+`E2E_BACKEND`: in `composed` mode it seeds sessions with a real login (not a mock token) and forces
+error scenarios with Playwright's `page.route()` (not the MSW control surface). It also uses an
+ordinary email domain (the API rejects the reserved `.test` TLD), a future bookable day (the real
+availability filters to the future), and — for the staff manage journey — arranges the appointment
+through the API, since the wizard has no patient picker and the API requires a `patient_id` for staff
+bookings. See ADR 0007. Only the journeys run here; a11y + visual stay on the deterministic MSW build.
+
+In CI the `e2e-composed` job is **gated behind `vars.API_REPO`** (it builds the API image from that
+repo). A fork with nothing configured skips it and stays green — the same shape as the API's `sil`
+job.
