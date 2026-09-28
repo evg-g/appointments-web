@@ -19,6 +19,8 @@ export default defineConfig({
     globals: true,
     setupFiles: "./src/test/setup.ts",
     css: false,
+    // Deterministic time: render timezone-dependent output in a fixed zone (spec §6).
+    env: { TZ: "UTC" },
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],

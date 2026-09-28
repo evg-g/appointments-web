@@ -73,6 +73,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/audit-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Audit Log
+         * @description List audit entries, newest first, with optional actor/action/entity filters.
+         */
+        get: operations["list_audit_log_api_v1_audit_log_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -662,6 +682,38 @@ export interface components {
         AppointmentTransition: {
             target_status: components["schemas"]["AppointmentStatus"];
         };
+        /**
+         * AuditLogEntryOut
+         * @description A single append-only audit record. ``before``/``after`` carry the JSONB change snapshots.
+         */
+        AuditLogEntryOut: {
+            /** Action */
+            action: string;
+            /** Actor Id */
+            actor_id: string | null;
+            /** After */
+            after: {
+                [key: string]: unknown;
+            } | null;
+            /** Before */
+            before: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Entity Id */
+            entity_id: string;
+            /** Entity Type */
+            entity_type: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
         /** CancelRequest */
         CancelRequest: {
             /** Reason */
@@ -921,6 +973,12 @@ export interface components {
         Page_AppointmentOut_: {
             /** Data */
             data: components["schemas"]["AppointmentOut"][];
+            page: components["schemas"]["PageInfo"];
+        };
+        /** Page[AuditLogEntryOut] */
+        Page_AuditLogEntryOut_: {
+            /** Data */
+            data: components["schemas"]["AuditLogEntryOut"][];
             page: components["schemas"]["PageInfo"];
         };
         /** Page[ClinicOut] */
@@ -1428,6 +1486,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AppointmentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_audit_log_api_v1_audit_log_get: {
+        parameters: {
+            query?: {
+                actor_id?: string | null;
+                action?: string | null;
+                entity_type?: string | null;
+                entity_id?: string | null;
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AuditLogEntryOut_"];
                 };
             };
             /** @description Validation Error */
