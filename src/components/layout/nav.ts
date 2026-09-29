@@ -1,4 +1,11 @@
-import { CalendarDays, LayoutDashboard, Settings2, Thermometer } from "lucide-react";
+import {
+  CalendarDays,
+  CalendarRange,
+  LayoutDashboard,
+  Settings,
+  Settings2,
+  Thermometer,
+} from "lucide-react";
 import type { ComponentType } from "react";
 
 import type { UserRole } from "@/auth/auth-context";
@@ -19,8 +26,10 @@ const ADMINS: readonly UserRole[] = ["CLINIC_ADMIN", "PLATFORM_ADMIN"];
 export const NAV_ITEMS: readonly NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/appointments", label: "Appointments", icon: CalendarDays },
+  { to: "/calendar", label: "Calendar", icon: CalendarRange },
   { to: "/cold-chain", label: "Cold chain", icon: Thermometer, roles: STAFF },
   { to: "/admin", label: "Admin", icon: Settings2, roles: ADMINS },
+  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 /** Nav items the given role is allowed to see. */

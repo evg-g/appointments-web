@@ -1,0 +1,113 @@
+# Fully composed stack for the milestone-15 end-to-end run: the real API + Postgres + Redis, plus
+# the web tier (nginx serving the built SPA and reverse-proxying /api on the same origin). The
+# Playwright journeys run against http://localhost:8080 with NO MSW — the exact specs milestone 14
+# wrote, now driving a real backend. This is what turns the web E2E from "mocked network" into the
+# "real stack in Docker Compose" the spec (§6, §9) asks for.
+#
+# The API image is built separately and referenced by tag (default `appointments-api:local`):
+#   - locally:  `make compose-e2e-up` builds it from ../appointments-api first.
+#   - in CI:    the e2e-composed job checks out the API repo and `docker build`s it.
+# Override with API_IMAGE (e.g. a published GHCR tag).
+#
+# Bring it up:   docker compose -f docker-compose.e2e.yml up -d --build --wait
+# Seed + run:    node scripts/seed-e2e.mjs && npm run e2e:composed
+# Tear down:     docker compose -f docker-compose.e2e.yml down -v
+
+name: aurora-web-e2e
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: aurora
+      POSTGRES_PASSWORD: aurora
+      POSTGRES_DB: aurora
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aurora -d aurora"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Apply migrations once, before the API starts (the same expand-phase shape CI and prod use).
+  migrate:
+    image: ${API_IMAGE:-appointments-api:local}
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://aurora:aurora@db:5432/aurora
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    image: ${API_IMAGE:-appointments-api:local}
+    environment:
+      APP_ENV: local
+      DATABASE_URL: postgresql+psycopg://aurora:aurora@db:5432/aurora
+      REDIS_URL: redis://redis:6379/0
+      # E2E-only secret; never a real key. 40+ chars so it clears any minimum-length check.
+      JWT_SECRET: e2e-only-insecure-secret-do-not-use-in-prod
+      # The journeys log in as several accounts in quick succession; a shared fixed-window limiter
+      # would turn that into 429s, so disable it for the deterministic E2E run only.
+      RATE_LIMIT_ENABLED: "false"
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - 'python -c "import sys,urllib.request; sys.exit(0 if urllib.request.urlopen(''http://localhost:8000/health/ready'').status==200 else 1)"'
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  # Bootstrap the first PLATFORM_ADMIN directly in the DB (it cannot be created through the API —
+  # POST /users itself needs an admin token). The rest of the aligned demo graph (the "Aurora
+  # Downtown" clinic and the patient/clinician the specs expect) is provisioned over the public API
+  # by scripts/seed-e2e.mjs, run from the host after the stack is up.
+  seed-admin:
+    image: ${API_IMAGE:-appointments-api:local}
+    command: ["python", "scripts/seed.py"]
+    environment:
+      APP_ENV: local
+      DATABASE_URL: postgresql+psycopg://aurora:aurora@db:5432/aurora
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: e2e-only-insecure-secret-do-not-use-in-prod
+      # The admin the host seed script logs in as. An ordinary domain (the API rejects reserved TLDs
+      # like `.test`). The seed's own demo patient uses a different local part so it does not collide
+      # with the patient@aurora-clinic.com account scripts/seed-e2e.mjs creates.
+      SEED_ADMIN_EMAIL: admin@aurora-clinic.com
+      SEED_ADMIN_PASSWORD: password123
+      SEED_PATIENT_EMAIL: demo-patient@aurora-clinic.com
+      SEED_PATIENT_PASSWORD: password123
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
+  web:
+    build:
+      context: .
+    image: appointments-web:local
+    environment:
+      API_UPSTREAM: api:8000
+    ports:
+      - "8080:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
