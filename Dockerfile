@@ -22,7 +22,7 @@ COPY . .
 RUN npm run build
 
 
-FROM nginx:1.27-alpine AS runtime
+FROM nginx:1.30-alpine AS runtime
 
 ARG VERSION="0.0.0"
 ARG REVISION="unknown"
@@ -32,6 +32,10 @@ LABEL org.opencontainers.image.title="appointments-web" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${REVISION}"
+
+# Pull in Alpine security fixes that landed after the base image was built (the Trivy gate fails
+# on fixed HIGH/CRITICAL CVEs, and the nginx image can lag the Alpine repo by days).
+RUN apk upgrade --no-cache
 
 # Host:port the SPA's /api and /health requests are proxied to. Override at runtime (compose sets
 # `api:8000`; the Azure web container app sets the API app's FQDN).

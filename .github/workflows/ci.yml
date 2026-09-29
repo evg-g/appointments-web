@@ -294,7 +294,7 @@ jobs:
             VERSION=ci-${{ github.sha }}
             REVISION=${{ github.sha }}
       - name: Trivy image scan (fail on HIGH/CRITICAL)
-        uses: aquasecurity/trivy-action@v0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
           image-ref: appointments-web:ci
@@ -302,7 +302,7 @@ jobs:
           ignore-unfixed: true
           exit-code: "1"
       - name: Generate CycloneDX SBOM from the image
-        uses: aquasecurity/trivy-action@v0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: image
           image-ref: appointments-web:ci
