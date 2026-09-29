@@ -204,6 +204,54 @@ export function resetDb(): void {
   db = seed();
 }
 
+const PATIENT_USER = "11111111-1111-4111-8111-111111111111"; // patient@aurora.test
+
+/** A weekday `days` from now at `hourUtc`:00Z (Saturday/Sunday roll forward to Monday). */
+function demoSlot(
+  days: number,
+  hourUtc: number,
+  minutes: number,
+): { starts_at: string; ends_at: string } {
+  const start = new Date();
+  start.setUTCDate(start.getUTCDate() + days);
+  while (start.getUTCDay() === 0 || start.getUTCDay() === 6) {
+    start.setUTCDate(start.getUTCDate() + (days < 0 ? -1 : 1));
+  }
+  start.setUTCHours(hourUtc, 0, 0, 0);
+  const end = new Date(start.getTime() + minutes * 60_000);
+  return { starts_at: start.toISOString(), ends_at: end.toISOString() };
+}
+
+/**
+ * Populate the mock backend with a realistic week of bookings, for the live demo and the README
+ * screenshots. Opt-in (`VITE_MSW_DEMO_DATA=true`): the tests keep the empty seed, so their empty
+ * states and visual baselines do not depend on the date they run.
+ */
+export function seedDemoData(): void {
+  const rows: [number, number, string, AppointmentOut["status"], string | null][] = [
+    [1, 17, SERVICE_30, "CONFIRMED", null],
+    [2, 18, SERVICE_60, "REQUESTED", null],
+    [4, 16, SERVICE_30, "CONFIRMED", null],
+    [-2, 17, SERVICE_30, "COMPLETED", null],
+    [-5, 19, SERVICE_60, "CANCELLED", "Rescheduled by the patient"],
+    [-9, 16, SERVICE_30, "NO_SHOW", null],
+  ];
+  rows.forEach(([days, hour, serviceId, status, reason], index) => {
+    const minutes = serviceId === SERVICE_60 ? 60 : 30;
+    db.appointments.push({
+      id: `99999999-2222-4222-8222-${String(index + 1).padStart(12, "0")}`,
+      clinic_id: CLINIC_A,
+      clinician_id: CLINICIAN_1,
+      service_id: serviceId,
+      patient_id: PATIENT_USER,
+      status,
+      cancellation_reason: reason,
+      version: status === "REQUESTED" ? 1 : 2,
+      ...demoSlot(days, hour, minutes),
+    });
+  });
+}
+
 export function nextId(prefix: string): string {
   db.seq += 1;
   const tail = String(db.seq).padStart(12, "0");

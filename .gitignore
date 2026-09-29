@@ -4,6 +4,7 @@ node_modules/
 # Build output
 dist/
 dist-e2e/
+dist-demo/
 dist-ssr/
 storybook-static/
 *.local

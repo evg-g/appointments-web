@@ -13,7 +13,10 @@ e2e/
   journeys/              login, book, transition/confirm, cancel, authz denial, error + empty states
   a11y/                  axe sweep: every route, light + dark, zero serious/critical
   visual/                screenshot regression: key pages, light + dark (baselines committed)
+  layout/                header fits on one line at 1024/1280/1440px (see "Why layout/ exists")
+  showcase/              README screenshots with demo data; NOT a test, never run in CI
 playwright.config.ts     builds dist-e2e (MSW) + previews it on :4173; Chromium (+ WebKit in CI)
+playwright.showcase.config.ts   builds dist-demo (MSW + VITE_MSW_DEMO_DATA) on :4174 for showcase/
 lighthouserc.json        LCP / CLS / TBT budgets against the prod build
 scripts/check-bundle-size.mjs   gzipped initial + total JS budget
 scripts/lighthouse.mjs   runs Lighthouse with Playwright's Chromium
@@ -32,7 +35,15 @@ make lighthouse             # build + LCP/CLS/TBT budgets
 ```
 
 `npm run e2e` builds the MSW app and previews it automatically (the Playwright `webServer`), so no
-separate server is needed.
+separate server is needed. `npm run screenshots` refreshes `docs/screenshots/` the same way.
+
+### Why `layout/` exists
+
+With an admin's six nav links the header squeezed its flex children at 1280px and wrapped "Aurora
+Clinic" and "Cold chain" onto two lines. The visual baselines had been generated from that state,
+so they treated the bug as correct: a screenshot test only proves the page did not _change_, not
+that it was right when the baseline was taken. `layout/header.spec.ts` asserts the rule itself (one
+line per label, no sideways scroll) and failed at all three widths before the fix.
 
 ## Budgets
 

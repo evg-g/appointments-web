@@ -25,6 +25,8 @@
     "storybook": "storybook dev -p 6006 --no-open",
     "build:storybook": "storybook build",
     "build:e2e": "VITE_ENABLE_MSW=true vite build --outDir dist-e2e",
+    "build:demo": "VITE_ENABLE_MSW=true VITE_MSW_DEMO_DATA=true vite build --outDir dist-demo",
+    "screenshots": "playwright test -c playwright.showcase.config.ts",
     "preview:e2e": "vite preview --outDir dist-e2e --port 4173 --strictPort",
     "preview:prod": "vite preview --outDir dist --port 4180 --strictPort",
     "e2e": "playwright test",

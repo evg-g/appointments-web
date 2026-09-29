@@ -1,5 +1,6 @@
 import { setupWorker } from "msw/browser";
 
+import { seedDemoData } from "./db";
 import { handlers, scenarios } from "./handlers";
 
 /** MSW worker for the dev server and the browser E2E build. Only started when VITE_ENABLE_MSW=true. */
@@ -57,6 +58,7 @@ function installE2eControls(): void {
 }
 
 export async function startMockWorker(): Promise<void> {
+  if (import.meta.env.VITE_MSW_DEMO_DATA === "true") seedDemoData();
   await worker.start({ onUnhandledRequest: "bypass", quiet: true });
   installE2eControls();
 }
