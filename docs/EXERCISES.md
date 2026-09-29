@@ -25,6 +25,7 @@ icon-only button (the theme toggle, or a table row action), or the label associa
 gate refuses to ship it?
 
 **Catch (needs the browser).**
+
 ```bash
 make e2e-a11y
 ```
@@ -45,6 +46,7 @@ background — e.g. lighten `--color-text-muted` until it is around 3:1 on the s
 audit-log id at 4.08:1). Which check fails, and at what ratio?
 
 **Catch (needs the browser).**
+
 ```bash
 make e2e-a11y
 ```
@@ -67,6 +69,7 @@ regenerating from the other.
 notices that the committed client no longer matches the contract, and does `tsc` care too?
 
 **Catch (no browser).**
+
 ```bash
 make check-client       # drift gate: committed client vs the contract
 make typecheck          # tsc --noEmit
@@ -77,7 +80,7 @@ differs from what is committed, so a backend change that reaches the front end b
 build time instead of silently at runtime. If your hand-edit also makes call sites reference a field
 that no longer exists in the types, `tsc` fails as well. See
 [ADR 0001](adr/0001-generate-api-client-from-openapi.md) and the API's
-[CONTRACT_WORKFLOW.md](../../appointments-api/docs/CONTRACT_WORKFLOW.md).
+[CONTRACT_WORKFLOW.md](https://github.com/evg-g/appointments-api/blob/main/docs/CONTRACT_WORKFLOW.md).
 
 **Restore.** `git checkout -- src/ contracts/`
 
@@ -91,6 +94,7 @@ fails).
 does the user see with no rollback, and which test asserts the correct behaviour?
 
 **Catch (no browser).**
+
 ```bash
 make test
 ```
@@ -112,6 +116,7 @@ forever.
 get without it?
 
 **Catch (no browser).**
+
 ```bash
 make test
 ```
@@ -133,6 +138,7 @@ sending the `If-Match` header derived from the appointment's `ETag`.
 a now-stale view. The API answers `412`. How should the UI react, and which test checks it?
 
 **Catch (no browser).**
+
 ```bash
 make test
 ```
@@ -153,6 +159,7 @@ fails.
 **Predict.** The app still works. What grows, and which two gates are watching it?
 
 **Catch (needs the browser for Lighthouse).**
+
 ```bash
 make bundle-check       # gzipped initial/total budget (build only, no browser)
 make lighthouse         # LCP / CLS / TBT budgets
