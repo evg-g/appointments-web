@@ -95,4 +95,7 @@ export const routes: RouteObject[] = [
   },
 ];
 
-export const router = createBrowserRouter(routes);
+// BASE_URL is "/" normally and "/appointments-web/" in the GitHub Pages build (vite --base).
+export const router = createBrowserRouter(routes, {
+  basename: import.meta.env.BASE_URL.replace(/\/$/, "") || "/",
+});

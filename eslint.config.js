@@ -11,6 +11,7 @@ export default tseslint.config(
       "dist",
       "dist-e2e",
       "dist-demo",
+      "dist-pages",
       "coverage",
       "storybook-static",
       "playwright-report",

@@ -59,6 +59,11 @@ function installE2eControls(): void {
 
 export async function startMockWorker(): Promise<void> {
   if (import.meta.env.VITE_MSW_DEMO_DATA === "true") seedDemoData();
-  await worker.start({ onUnhandledRequest: "bypass", quiet: true });
+  await worker.start({
+    onUnhandledRequest: "bypass",
+    quiet: true,
+    // Served next to index.html, so this also works under a sub-path (the GitHub Pages demo).
+    serviceWorker: { url: `${import.meta.env.BASE_URL}mockServiceWorker.js` },
+  });
   installE2eControls();
 }

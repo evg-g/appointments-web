@@ -80,6 +80,12 @@ export function LoginRoute() {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
+            {import.meta.env.VITE_MSW_DEMO_DATA === "true" && (
+              <Alert title="Live demo — no real backend">
+                Sign in as <code>patient@aurora.test</code>, <code>clinician@aurora.test</code>, or{" "}
+                <code>admin@aurora.test</code>. Password for all: <code>password123</code>.
+              </Alert>
+            )}
             {formError !== null && <Alert variant="danger">{formError}</Alert>}
 
             <Field label="Email" error={errors.email?.message} required>

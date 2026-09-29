@@ -1,6 +1,7 @@
 dist
 dist-e2e
 dist-demo
+dist-pages
 coverage
 node_modules
 package-lock.json

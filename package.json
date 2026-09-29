@@ -27,6 +27,8 @@
     "build:e2e": "VITE_ENABLE_MSW=true vite build --outDir dist-e2e",
     "build:demo": "VITE_ENABLE_MSW=true VITE_MSW_DEMO_DATA=true vite build --outDir dist-demo",
     "screenshots": "playwright test -c playwright.showcase.config.ts",
+    "e2e:pages": "playwright test -c playwright.pages.config.ts",
+    "build:pages": "VITE_ENABLE_MSW=true VITE_MSW_DEMO_DATA=true vite build --outDir dist-pages --base /appointments-web/ && cp dist-pages/index.html dist-pages/404.html",
     "preview:e2e": "vite preview --outDir dist-e2e --port 4173 --strictPort",
     "preview:prod": "vite preview --outDir dist --port 4180 --strictPort",
     "e2e": "playwright test",

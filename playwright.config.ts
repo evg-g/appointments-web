@@ -22,8 +22,9 @@ const allBrowsers = process.env.PW_ALL_BROWSERS === "1";
 
 export default defineConfig({
   testDir: "./e2e",
-  // e2e/showcase/ only makes README screenshots (playwright.showcase.config.ts); it is not a test.
-  testIgnore: /showcase\//,
+  // e2e/showcase/ only makes README screenshots, and e2e/pages/ targets the GitHub Pages build;
+  // each has its own config (playwright.showcase.config.ts, playwright.pages.config.ts).
+  testIgnore: [/showcase\//, /pages\//],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
@@ -63,8 +64,8 @@ export default defineConfig({
             name: "webkit",
             use: { ...devices["Desktop Safari"] },
             // Visual baselines are engine-specific; keep them on one engine. A project-level
-            // testIgnore replaces the top-level one, so showcase/ is listed again here.
-            testIgnore: [/visual\//, /showcase\//],
+            // testIgnore replaces the top-level one, so showcase/ and pages/ are listed again here.
+            testIgnore: [/visual\//, /showcase\//, /pages\//],
           },
         ]
       : []),
