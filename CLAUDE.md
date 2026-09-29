@@ -36,10 +36,16 @@ Run the dev server with mock data: `VITE_ENABLE_MSW=true npm run dev` (seed logi
 
 - Unit: Vitest (hooks, formatters, schemas).
 - Component: Vitest + Testing Library + MSW; query by role/label.
-- E2E / a11y / visual: Playwright under `e2e/` (milestone 14). The specs drive the real build served
-  by `vite preview` with the app's MSW backend (`VITE_ENABLE_MSW=true`) — deterministic, no Docker.
-  `make e2e` runs journeys + a11y + visual; `make e2e-update-snapshots` regenerates visual baselines
-  (Chromium-on-Linux, committed). Force error states through the MSW `scenarios` map, never a
-  hand-rolled mock. Running against the composed stack is milestone 15. See
-  `docs/BROWSER_TESTING.md` + ADR 0006.
+- E2E / a11y / visual: Playwright under `e2e/`. `make e2e` runs journeys + a11y + visual against the
+  real build served by `vite preview` with the app's MSW backend (`VITE_ENABLE_MSW=true`) —
+  deterministic, no Docker. Force error states through the MSW `scenarios` map, never a hand-rolled
+  mock. `make e2e-update-snapshots` regenerates visual baselines (Chromium-on-Linux, committed).
+- Composed-stack E2E (milestone 15): the same **journeys** run against the real API + Postgres +
+  Redis behind the web tier. `make e2e-composed-all` (build images → up → seed → run → down), or the
+  `e2e-composed` CI job (gated on `vars.API_REPO`). The specs are unchanged; `e2e/support/helpers.ts`
+  branches on `E2E_BACKEND=composed` (real login + `page.route()` injection). See
+  `docs/BROWSER_TESTING.md`, `docs/CI_CD.md`, ADR 0006 + 0007.
 - Budgets: `make bundle-check` (gzipped JS) and `make lighthouse` (LCP/CLS/TBT) — enforced in CI.
+- Delivery: `Dockerfile` (nginx: SPA + same-origin `/api` proxy) → `cd.yml` (release-please → cosign
+  sign → GHCR → Azure Container Apps, all cloud steps gated by `DEPLOY_ENABLED`). See
+  `docs/DEPLOYMENT.md`.

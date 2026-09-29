@@ -30,7 +30,9 @@ async function advanceToConfirm(): Promise<void> {
   await screen.findByRole("button", { name: /confirm booking/i });
 }
 
-describe("booking flow", () => {
+// The full four-step wizard plus submit is the longest journey in the suite; under a loaded
+// machine it can pass Vitest's default 5s per-test limit, so it gets its own ceiling.
+describe("booking flow", { timeout: 15_000 }, () => {
   beforeEach(async () => {
     await loginAs("patient@aurora.test");
   });

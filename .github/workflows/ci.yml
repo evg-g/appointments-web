@@ -28,6 +28,36 @@ jobs:
       - run: npm run lint
       - run: npm run format:check
 
+  commitlint:
+    name: PR title (conventional commits)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check the PR title follows Conventional Commits
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          # release-please (cd.yml) derives the changelog from PR titles, so a malformed title breaks
+          # the release notes. Enforce the shape here rather than pulling in a third-party action.
+          pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-z0-9_-]+\))?!?: .+'
+          if [[ ! "$PR_TITLE" =~ $pattern ]]; then
+            echo "PR title '$PR_TITLE' is not a Conventional Commit." >&2
+            echo "Expected e.g.  feat(web): add composed-stack e2e" >&2
+            exit 1
+          fi
+
+  workflow-lint:
+    name: workflow lint (actionlint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: actionlint
+        uses: docker://rhysd/actionlint:latest
+        with:
+          args: -color
+
   typecheck:
     name: tsc --noEmit
     runs-on: ubuntu-latest
@@ -172,3 +202,133 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build:storybook
+
+  # Milestone 15: the journeys against the FULLY COMPOSED stack (real API + Postgres + Redis + the
+  # web tier), not MSW. The backend image is built from the API repo. Cross-repo, so it is gated
+  # behind the `API_REPO` variable — set it (e.g. evg-g/appointments-api) to enable this job; a fork
+  # with nothing configured skips it cleanly and stays green. Same gating shape as the API's sil job.
+  e2e-composed:
+    name: e2e (composed stack)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: vars.API_REPO != ''
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out the API repo (source of the backend image)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.API_REPO }}
+          ref: ${{ vars.API_REF || 'main' }}
+          path: appointments-api
+      - name: Build the API image
+        run: docker build -t appointments-api:local ./appointments-api
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Get Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Bring up the composed stack
+        run: docker compose -f docker-compose.e2e.yml up -d --build --wait
+      - name: Seed the aligned demo graph
+        run: node scripts/seed-e2e.mjs
+      - name: Run the journeys against the composed stack
+        run: npm run e2e:composed
+      - name: Dump stack logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.e2e.yml logs --no-color --tail 200
+      - name: Upload composed Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-composed
+          path: playwright-report-composed/
+          retention-days: 14
+      - name: Tear down
+        if: always()
+        run: docker compose -f docker-compose.e2e.yml down -v
+
+  security:
+    name: security (audit, scan, secrets, SBOM)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gitleaks scans full history
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # Dependency CVEs: gate on the PRODUCTION dependency tree only. Dev-toolchain advisories
+      # (Vite/esbuild/Storybook transitive) never reach the browser bundle; they are tracked by
+      # Dependabot. `--omit=dev` is 0 today (see docs/KNOWN_GAPS.md).
+      - name: npm audit (production deps, fail on high/critical)
+        run: npm audit --omit=dev --audit-level=high
+      - name: gitleaks (secret scan)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the web image for scanning
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: appointments-web:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=ci-${{ github.sha }}
+            REVISION=${{ github.sha }}
+      - name: Trivy image scan (fail on HIGH/CRITICAL)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: appointments-web:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: Generate CycloneDX SBOM from the image
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: appointments-web:ci
+          format: cyclonedx
+          output: sbom.cdx.json
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.cdx.json
+          retention-days: 90
+
+  codeql:
+    name: CodeQL (static analysis)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read # CodeQL reads the workflow run; required on private repos
+      security-events: write # required to upload results to the Security tab
+    steps:
+      - uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3

@@ -1,9 +1,14 @@
 # appointments-web
 
+[![ci](https://github.com/evg-g/appointments-web/actions/workflows/ci.yml/badge.svg)](https://github.com/evg-g/appointments-web/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+Part of **[Aurora Clinic](https://github.com/evg-g/aurora)** — three repos, one product.
+
 The web front end for **Aurora Clinic** — appointment scheduling and cold-chain monitoring.
 React 19, TypeScript (strict), Vite, Tailwind v4.
 
-One of three repos in the system — see the top-level `README.md`.
+One of three repos in the system — see the [top-level `README.md`](https://github.com/evg-g/aurora).
 
 ## Why this exists
 
@@ -14,12 +19,32 @@ API client is generated from the backend's OpenAPI schema rather than hand-writt
 
 ## Status
 
+Milestone 15 (web CI/CD complete) complete:
+
+- **Composed-stack E2E** — the milestone-14 journeys now also run against the fully composed stack
+  (real API + Postgres + Redis behind the nginx web tier), not just MSW. `docker-compose.e2e.yml`
+  stands the stack up, `scripts/seed-e2e.mjs` provisions the demo graph over the real API, and
+  `playwright.composed.config.ts` runs the **unchanged** specs at `http://localhost:8080`. Only
+  `e2e/support/helpers.ts` branches on `E2E_BACKEND` (real login + `page.route()` error injection).
+  Verified locally: 11/11. CI: the `e2e-composed` job, gated behind `vars.API_REPO`.
+- **Web tier** — a hardened `Dockerfile` (nginx serving the SPA with a history-API fallback and
+  reverse-proxying `/api` + `/health` on the same origin; SSE-safe; CSP + security headers).
+- **Delivery pipeline** (`cd.yml`) — release-please → build + **cosign** keyless signature + GHCR
+  push (provenance) → deploy staging → smoke → manual-approval production → smoke, on Azure Container
+  Apps via OIDC. Every cloud step is gated by `DEPLOY_ENABLED`, so a fork stays green with no secrets.
+  `docker-compose.prod.yml` is the no-cloud fallback; `infra/` holds the Bicep.
+- **CI hardening** — `security` (npm audit on production deps, gitleaks, Trivy image scan, SBOM),
+  `codeql`, `commitlint`, and `workflow-lint` jobs added.
+
+See [ADR 0007](docs/adr/0007-composed-e2e-and-delivery.md), [docs/CI_CD.md](docs/CI_CD.md), and
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 Milestone 14 (browser test tiers + performance budgets) complete:
 
 - **Playwright E2E** (`e2e/journeys/`) — login, book, transition/confirm, cancel, authorization
   denial, and forced error + empty states. The specs drive the real production build served by
   `vite preview`, with the app's own typed MSW backend supplying `/api/v1` (deterministic, no
-  Docker). Running them against the composed stack is milestone 15.
+  Docker). The same journeys also run against the composed real stack (milestone 15, above).
 - **Accessibility** (`e2e/a11y/`) — `@axe-core/playwright` sweeps every route in light and dark;
   zero serious/critical violations, enforced. (It caught and we fixed a real WCAG AA contrast bug.)
 - **Visual regression** (`e2e/visual/`) — Playwright screenshots of the key pages, light + dark,
@@ -82,15 +107,20 @@ make test              # run Vitest
 make storybook         # component workshop on http://localhost:6006
 make ci-local          # lint + typecheck + test + client drift check
 
-# Browser tiers (milestone 14) — need the Playwright Chromium browser:
+# Browser tiers — need the Playwright Chromium browser:
 make setup-e2e         # install Chromium
 make e2e               # E2E journeys + a11y + visual (builds the MSW app and previews it)
 make bundle-check      # enforce the gzipped bundle-size budget
 make lighthouse        # LCP/CLS/TBT budgets against the prod build
+
+# Composed-stack E2E (milestone 15) — needs Docker + the sibling appointments-api repo:
+make e2e-composed-all  # build images → compose up → seed → run journeys → tear down
 ```
 
 Seed logins for the mock/dev server (`VITE_ENABLE_MSW=true npm run dev`), all with password
-`password123`: `patient@aurora.test`, `clinician@aurora.test`, `admin@aurora.test`.
+`password123`: `patient@aurora.test`, `clinician@aurora.test`, `admin@aurora.test`. The composed
+stack uses the same local parts on an ordinary domain (`@aurora-clinic.com`), since the real API
+rejects the reserved `.test` TLD.
 
 ## The generated API client
 

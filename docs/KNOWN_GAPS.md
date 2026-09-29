@@ -2,14 +2,43 @@
 
 Things not yet complete, with the exact reason. Kept honest; updated as gaps close.
 
+## Milestone 15 (web CI/CD complete) — deliberate scope + deferrals
+
+- **Composed-stack E2E — closed.** The milestone-14 journeys now also run against the fully composed
+  stack (real API + Postgres + Redis behind the nginx web tier), via `docker-compose.e2e.yml` +
+  `playwright.composed.config.ts`. The spec files are unchanged; only `e2e/support/helpers.ts`
+  branches on `E2E_BACKEND` (real login + `page.route()` error injection). CI: the `e2e-composed`
+  job, gated behind `vars.API_REPO`. Verified locally: 11/11. See ADR 0007 + `docs/CI_CD.md`.
+- **a11y + visual tiers stay on the MSW build.** Only the journeys run against the composed stack.
+  The a11y sweep needs every route fully populated and the visual baselines are pixel- and
+  engine-specific — re-proving them against a live backend adds flakiness without adding signal, so
+  they remain on the deterministic MSW build (the `e2e` job).
+- **Staff cannot book through the wizard.** The real API requires a `patient_id` when staff book on
+  behalf of a patient, but the booking wizard has no patient picker (it books for the signed-in
+  patient). The manage journey therefore arranges its appointment through the API as the patient,
+  then drives the transition/cancel through the UI. Adding a patient picker to the wizard is a
+  product follow-up; MSW papered over this by defaulting the patient to the actor.
+- **Fleet/device simulator is not wired into the web E2E compose.** No journey asserts on live
+  telemetry ingestion (the cold-chain route is authz-only in the journeys and is excluded from a11y +
+  visual), and live ingestion is already proven by the device SIL tier (aurora-sensor-agent,
+  milestone 11) and the API telemetry tests (milestone 10). Adding the device image + MQTT broker to
+  the web compose would be cross-repo and flaky for no added web-side signal, so it is deliberately
+  out of scope here.
+- **Security + CodeQL jobs are wired but were not executed locally.** `ci.yml` gains `security`
+  (npm audit on production deps, gitleaks, Trivy image scan on HIGH/CRITICAL, CycloneDX SBOM) and
+  `codeql`. These run on GitHub-hosted runners; they were validated with `actionlint` but not run in
+  this environment. The dependency gate is `npm audit --omit=dev` (production tree, 0 today).
+- **TLS to the API upstream.** The nginx proxy targets plain HTTP (correct for Compose and a shared
+  Container Apps environment). An HTTPS-only public API upstream needs a one-line `proxy_pass https`
+  - `proxy_ssl_server_name` change to the template — noted in `docs/DEPLOYMENT.md`, off the default
+    path.
+
 ## Milestone 14 (browser tests + budgets) — deliberate scope + deferrals
 
-- **E2E runs against the app's own MSW backend, not the composed stack.** The Playwright journeys
+- **E2E against MSW — composed-stack run added in milestone 15 (see above).** The Playwright journeys
   drive the real production build served by `vite preview`, with MSW supplying `/api/v1` (seeded
   data + the same named error scenarios the component tests use). This keeps the tier deterministic
-  and Docker-free. Running the identical specs against the fully composed stack (real API + Postgres
-  - Redis, brought up by Docker Compose) is milestone 15 — only the `/api/v1` backend changes, not
-    the specs. See ADR 0006.
+  and Docker-free; the same specs also run against the real stack now. See ADR 0006 + 0007.
 - **WebKit is a CI-only shard.** Journeys + a11y run on Chromium locally and on Chromium + WebKit in
   CI (`PW_ALL_BROWSERS=1`, where `playwright install --with-deps` provides WebKit's libraries).
   Visual snapshots are Chromium-only by design (baselines are engine-specific).
@@ -28,8 +57,9 @@ and Storybook transitive dependencies), not in anything shipped to the browser:
 
 - `npm audit --omit=dev` reports **0 vulnerabilities** (nothing in the production bundle).
 
-They are handled by the CI `security` job (milestone 15) which fails on high/critical, plus
-Dependabot. No production impact.
+They are handled by the CI `security` job (added in milestone 15), which gates the **production**
+dependency tree (`npm audit --omit=dev --audit-level=high`) and scans the built image with Trivy,
+plus Dependabot. The dev-only advisories are surfaced but not shipped. No production impact.
 
 ## Milestone 13 (web features) — deliberate deferrals
 
@@ -77,4 +107,6 @@ Dependabot. No production impact.
 
 - Playwright E2E, axe-in-CI, visual regression, Lighthouse budgets — built in milestone 14
   (see the milestone-14 section above and `docs/BROWSER_TESTING.md`).
-- Web CI/CD (deploy, E2E against the composed stack + fleet simulator) — milestone 15.
+- Web CI/CD (deploy pipeline + E2E against the composed stack) — built in milestone 15
+  (see the milestone-15 section above, `docs/CI_CD.md`, `docs/DEPLOYMENT.md`, ADR 0007).
+- Documentation, exercises, diagrams, final polish — milestone 16.

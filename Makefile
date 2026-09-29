@@ -4,7 +4,8 @@
 
 .PHONY: help setup dev build test lint fix typecheck ci-local clean \
 	generate-client vendor-contract check-client storybook build-storybook \
-	setup-e2e e2e e2e-a11y e2e-visual e2e-update-snapshots bundle-check lighthouse
+	setup-e2e e2e e2e-a11y e2e-visual e2e-update-snapshots bundle-check lighthouse \
+	compose-e2e-up compose-e2e-down seed-e2e e2e-composed e2e-composed-all
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
@@ -75,6 +76,28 @@ bundle-check: build ## Enforce the gzipped bundle-size budget on the production 
 lighthouse: build ## Run Lighthouse budgets (LCP/CLS/TBT) against the production build
 	npm run lighthouse
 
+# ---- Composed-stack E2E (milestone 15) ---------------------------------------------------------
+# Run the Playwright *journeys* against the real API + Postgres + Redis behind the web tier, instead
+# of the MSW preview. Needs Docker. The API image is built from the sibling repo first.
+
+API_DIR ?= ../appointments-api
+
+compose-e2e-up: ## Build the API + web images and bring the composed stack up (waits for health)
+	docker build -t appointments-api:local $(API_DIR)
+	docker compose -f docker-compose.e2e.yml up -d --build --wait
+
+seed-e2e: ## Provision the aligned demo graph over the real API (idempotent)
+	node scripts/seed-e2e.mjs
+
+e2e-composed: ## Run the journeys against an already-running composed stack
+	npm run e2e:composed
+
+e2e-composed-all: compose-e2e-up seed-e2e ## Bring up the stack, seed it, run the journeys, tear down
+	npm run e2e:composed; status=$$?; $(MAKE) compose-e2e-down; exit $$status
+
+compose-e2e-down: ## Stop the composed stack and remove its volumes
+	docker compose -f docker-compose.e2e.yml down -v
+
 clean: ## Remove build artifacts and caches
-	rm -rf dist dist-e2e coverage storybook-static playwright-report test-results \
-		lighthouse-report .lighthouseci node_modules/.vite
+	rm -rf dist dist-e2e coverage storybook-static playwright-report playwright-report-composed \
+		test-results lighthouse-report .lighthouseci node_modules/.vite
