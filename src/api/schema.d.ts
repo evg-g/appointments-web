@@ -1239,6 +1239,10 @@ export interface components {
         UserRole: "PATIENT" | "CLINICIAN" | "CLINIC_ADMIN" | "PLATFORM_ADMIN";
         /** ValidationError */
         ValidationError: {
+            /** Context */
+            ctx?: Record<string, never>;
+            /** Input */
+            input?: unknown;
             /** Location */
             loc: (string | number)[];
             /** Message */
