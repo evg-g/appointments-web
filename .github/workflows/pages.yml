@@ -1,0 +1,80 @@
+# GitHub Pages: the live demo and the latest Playwright report, for people who will not clone.
+#
+#   https://evg-g.github.io/appointments-web/          the app, with its MSW mock backend + demo data
+#   https://evg-g.github.io/appointments-web/report/   the Playwright HTML report from this commit
+#
+# Nothing here talks to a real backend: the demo is the production build with the same MSW handlers
+# the tests use. The Pages smoke test (e2e/pages/) must pass before anything is deployed.
+#
+# Gated by `vars.PAGES_ENABLED == 'true'`: free GitHub Pages needs a public repo, so on a private
+# repo (or a fork) the job skips cleanly, like the cloud steps in cd.yml.
+name: pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build demo + report
+    if: vars.PAGES_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Get Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium
+      - name: Install Playwright Chromium + system deps
+        run: npx playwright install --with-deps chromium
+
+      # Builds dist-pages (base /appointments-web/) and checks it the way Pages serves it.
+      - name: Smoke-test the demo build
+        run: npm run e2e:pages
+
+      # The published report shows the real result, pass or fail; ci.yml is the gate that blocks.
+      - name: Run the browser suite for the report
+        continue-on-error: true
+        run: npx playwright test --project=chromium
+
+      - name: Assemble the site
+        run: |
+          mkdir site
+          cp -r dist-pages/. site/
+          cp -r playwright-report site/report
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+  deploy:
+    name: deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

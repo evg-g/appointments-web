@@ -44,6 +44,19 @@ Why keep both `e2e` (MSW) and `e2e-composed`? The MSW run is fast, deterministic
 visual, which are seed- and engine-specific. The composed run proves the journeys hold against real
 business rules (auth, availability, ETag/If-Match transitions, problem+json). See ADR 0007.
 
+## `pages.yml` — live demo + test report, on push to `main`
+
+Publishes two things to GitHub Pages so a reviewer can look without cloning:
+
+- **`/appointments-web/`**: the production build with the MSW mock backend and the demo dataset
+  (`npm run build:pages`: `VITE_ENABLE_MSW` + `VITE_MSW_DEMO_DATA`, `--base /appointments-web/`, and
+  `404.html` = `index.html` so deep links survive a reload).
+- **`/appointments-web/report/`**: the Playwright HTML report of the Chromium suite at that commit.
+
+Before deploying, `npm run e2e:pages` builds the site and runs `e2e/pages/smoke.spec.ts` against
+`scripts/serve-pages.mjs`, a local server with the Pages rules (sub-path, 404 fallback). The job is
+gated by `vars.PAGES_ENABLED == 'true'`, because free Pages needs a public repo.
+
 ## `cd.yml` — delivery, on push to `main`
 
 Flow: **release → build + sign + push → deploy staging → smoke → manual approval → deploy production

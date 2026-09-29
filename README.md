@@ -5,6 +5,8 @@
 
 Part of **[Aurora Clinic](https://github.com/evg-g/aurora)** — three repos, one product.
 
+**[Live demo](https://evg-g.github.io/appointments-web/)** · **[Latest Playwright report](https://evg-g.github.io/appointments-web/report/)**
+
 The web front end for **Aurora Clinic** — appointment scheduling and cold-chain monitoring.
 React 19, TypeScript (strict), Vite, Tailwind v4.
 
