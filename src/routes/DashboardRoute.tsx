@@ -8,15 +8,14 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge, Button, EmptyState, QueryBoundary, SimpleCard, Spinner } from "@/components/ui";
 import { formatDateTime } from "@/lib/datetime";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/features/appointments/status";
+import { upcomingAppointments } from "@/features/appointments/upcoming";
 
 /** The landing page: a greeting, quick actions, a peek at upcoming appointments, and cold chain. */
 export function DashboardRoute() {
   const { user } = useAuth();
   const firstName = user?.full_name.split(" ")[0] ?? "there";
   const appointmentsQuery = useAppointments({ limit: 5 });
-  const upcoming = flattenAppointments(appointmentsQuery.data)
-    .filter((appointment) => new Date(appointment.starts_at).getTime() >= Date.now())
-    .slice(0, 5);
+  const upcoming = upcomingAppointments(flattenAppointments(appointmentsQuery.data), Date.now(), 5);
 
   return (
     <>
