@@ -1,8 +1,16 @@
 dist
+dist-e2e
 coverage
 node_modules
 package-lock.json
 storybook-static
+playwright-report
+test-results
+lighthouse-report
+.lighthouseci
+
+# Visual regression baselines (binary PNGs).
+e2e/**/*-snapshots/
 
 # Generated from the API contract — never hand-formatted (drift check compares exact output).
 src/api/schema.d.ts

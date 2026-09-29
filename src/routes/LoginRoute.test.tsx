@@ -74,7 +74,8 @@ describe("route authorization", () => {
     await loginAs("admin@aurora.test");
     renderApp("/admin");
 
-    expect(await screen.findByText(/arriving in milestone/i)).toBeInTheDocument();
+    // The admin index redirects to the clinics section; its section nav is present.
+    expect(await screen.findByRole("link", { name: /audit log/i })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: /admin/i }).length).toBeGreaterThan(0);
   });
 });
