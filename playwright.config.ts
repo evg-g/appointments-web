@@ -62,8 +62,9 @@ export default defineConfig({
           {
             name: "webkit",
             use: { ...devices["Desktop Safari"] },
-            // Visual baselines are engine-specific; keep them on one engine.
-            testIgnore: /visual\//,
+            // Visual baselines are engine-specific; keep them on one engine. A project-level
+            // testIgnore replaces the top-level one, so showcase/ is listed again here.
+            testIgnore: [/visual\//, /showcase\//],
           },
         ]
       : []),
