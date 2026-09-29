@@ -1239,6 +1239,10 @@ export interface components {
         UserRole: "PATIENT" | "CLINICIAN" | "CLINIC_ADMIN" | "PLATFORM_ADMIN";
         /** ValidationError */
         ValidationError: {
+            /** Context */
+            ctx?: Record<string, never>;
+            /** Input */
+            input?: unknown;
             /** Location */
             loc: (string | number)[];
             /** Message */
@@ -1326,9 +1330,7 @@ export interface operations {
                 limit?: number;
                 cursor?: string | null;
             };
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -1359,7 +1361,6 @@ export interface operations {
             query?: never;
             header?: {
                 "Idempotency-Key"?: string | null;
-                authorization?: string | null;
             };
             path?: never;
             cookie?: never;
@@ -1393,9 +1394,7 @@ export interface operations {
     get_appointment_api_v1_appointments__appointment_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path: {
                 appointment_id: string;
             };
@@ -1428,7 +1427,6 @@ export interface operations {
             query?: never;
             header?: {
                 "If-Match"?: string | null;
-                authorization?: string | null;
             };
             path: {
                 appointment_id: string;
@@ -1466,7 +1464,6 @@ export interface operations {
             query?: never;
             header?: {
                 "If-Match"?: string | null;
-                authorization?: string | null;
             };
             path: {
                 appointment_id: string;
@@ -1509,9 +1506,7 @@ export interface operations {
                 limit?: number;
                 cursor?: string | null;
             };
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -1604,9 +1599,7 @@ export interface operations {
     me_api_v1_auth_me_get: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -1619,15 +1612,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1672,9 +1656,7 @@ export interface operations {
                 service_id: string;
                 day: string;
             };
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -1707,9 +1689,7 @@ export interface operations {
                 limit?: number;
                 cursor?: string | null;
             };
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -1738,9 +1718,7 @@ export interface operations {
     create_clinician_api_v1_clinicians_post: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -1773,9 +1751,7 @@ export interface operations {
     get_clinician_api_v1_clinicians__clinician_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path: {
                 clinician_id: string;
             };
@@ -1809,9 +1785,7 @@ export interface operations {
                 limit?: number;
                 cursor?: string | null;
             };
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -1840,9 +1814,7 @@ export interface operations {
     create_clinic_api_v1_clinics_post: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -1875,9 +1847,7 @@ export interface operations {
     get_clinic_api_v1_clinics__clinic_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path: {
                 clinic_id: string;
             };
@@ -1912,9 +1882,7 @@ export interface operations {
                 limit?: number;
                 cursor?: string | null;
             };
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -1943,9 +1911,7 @@ export interface operations {
     provision_device_api_v1_devices_post: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -1978,9 +1944,7 @@ export interface operations {
     get_device_api_v1_devices__device_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path: {
                 device_id: string;
             };
@@ -2011,9 +1975,7 @@ export interface operations {
     rotate_credentials_api_v1_devices__device_id__credentials_rotate_post: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path: {
                 device_id: string;
             };
@@ -2048,9 +2010,7 @@ export interface operations {
                 limit?: number;
                 cursor?: string | null;
             };
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path: {
                 device_id: string;
             };
@@ -2081,9 +2041,7 @@ export interface operations {
     device_health_api_v1_devices__device_id__health_get: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path: {
                 device_id: string;
             };
@@ -2119,9 +2077,7 @@ export interface operations {
                 start?: string | null;
                 end?: string | null;
             };
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path: {
                 device_id: string;
             };
@@ -2189,9 +2145,7 @@ export interface operations {
     get_excursion_api_v1_excursions__excursion_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path: {
                 excursion_id: string;
             };
@@ -2222,9 +2176,7 @@ export interface operations {
     acknowledge_excursion_api_v1_excursions__excursion_id__acknowledge_post: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path: {
                 excursion_id: string;
             };
@@ -2259,9 +2211,7 @@ export interface operations {
                 limit?: number;
                 cursor?: string | null;
             };
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -2290,9 +2240,7 @@ export interface operations {
     create_service_api_v1_services_post: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -2325,9 +2273,7 @@ export interface operations {
     get_service_api_v1_services__service_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path: {
                 service_id: string;
             };
@@ -2360,9 +2306,7 @@ export interface operations {
             query?: {
                 last_event_id?: string | null;
             };
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -2391,9 +2335,7 @@ export interface operations {
     create_threshold_policy_api_v1_threshold_policies_post: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -2426,9 +2368,7 @@ export interface operations {
     create_user_api_v1_users_post: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -2461,9 +2401,7 @@ export interface operations {
     get_user_api_v1_users__user_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path: {
                 user_id: string;
             };
@@ -2494,9 +2432,7 @@ export interface operations {
     list_subscriptions_api_v1_webhooks_subscriptions_get: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -2511,23 +2447,12 @@ export interface operations {
                     "application/json": components["schemas"]["WebhookSubscriptionOut"][];
                 };
             };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
         };
     };
     create_subscription_api_v1_webhooks_subscriptions_post: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -2560,9 +2485,7 @@ export interface operations {
     delete_subscription_api_v1_webhooks_subscriptions__subscription_id__delete: {
         parameters: {
             query?: never;
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path: {
                 subscription_id: string;
             };
