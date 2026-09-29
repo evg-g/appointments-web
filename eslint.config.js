@@ -9,8 +9,13 @@ export default tseslint.config(
   {
     ignores: [
       "dist",
+      "dist-e2e",
       "coverage",
       "storybook-static",
+      "playwright-report",
+      "test-results",
+      "lighthouse-report",
+      ".lighthouseci",
       "node_modules",
       "src/api/schema.d.ts",
       "public/mockServiceWorker.js",
