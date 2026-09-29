@@ -14,7 +14,7 @@ One of three repos in the system — see the [top-level `README.md`](https://git
 
 A genuinely professional UI on top of the API: role-aware scheduling, a booking flow, admin
 views, and a live cold-chain dashboard. It is where design-token discipline, accessibility,
-and the four async states (loading / empty / error / success) are practised, and where the
+and the four async states (loading / empty / error / success) are applied, and where the
 API client is generated from the backend's OpenAPI schema rather than hand-written.
 
 ## Status
