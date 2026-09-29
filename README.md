@@ -1,9 +1,14 @@
 # appointments-web
 
+[![ci](https://github.com/evg-g/appointments-web/actions/workflows/ci.yml/badge.svg)](https://github.com/evg-g/appointments-web/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+Part of **[Aurora Clinic](https://github.com/evg-g/aurora)** — three repos, one product.
+
 The web front end for **Aurora Clinic** — appointment scheduling and cold-chain monitoring.
 React 19, TypeScript (strict), Vite, Tailwind v4.
 
-One of three repos in the system — see the top-level `README.md`.
+One of three repos in the system — see the [top-level `README.md`](https://github.com/evg-g/aurora).
 
 ## Why this exists
 
