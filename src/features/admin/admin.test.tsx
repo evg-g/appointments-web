@@ -49,6 +49,21 @@ describe("audit log", () => {
     expect(screen.getByText("device.provisioned")).toBeInTheDocument();
   });
 
+  it("shows who did it and what it was done to by name, not by id", async () => {
+    renderApp("/admin/audit");
+    await screen.findByText("appointment.confirmed");
+
+    // Actor: a person's name, and "System" for the automated excursion entry.
+    expect((await screen.findAllByText("Avery Admin")).length).toBeGreaterThan(0);
+    expect(screen.getByText("System")).toBeInTheDocument();
+    // Entity: the device label, and the excursion named by direction and its device.
+    expect(await screen.findByText("Vaccine fridge — annex")).toBeInTheDocument();
+    expect(await screen.findByText("High · Vaccine fridge — main")).toBeInTheDocument();
+    // An entity that no longer exists falls back to its short id instead of breaking the row.
+    expect(await screen.findByText("99999999")).toBeInTheDocument();
+    expect(screen.queryByText("33333333")).not.toBeInTheDocument();
+  });
+
   it("filters by entity type", async () => {
     renderApp("/admin/audit");
     await screen.findByText("appointment.confirmed");

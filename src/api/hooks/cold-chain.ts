@@ -136,6 +136,19 @@ export function flattenExcursions(
   return data?.pages.flatMap((page) => page.data) ?? [];
 }
 
+export function useExcursion(id: string): UseQueryResult<ExcursionOut, unknown> {
+  return useQuery({
+    queryKey: queryKeys.excursions.detail(id),
+    enabled: id !== "",
+    queryFn: async () =>
+      unwrap(
+        await api.GET("/api/v1/excursions/{excursion_id}", {
+          params: { path: { excursion_id: id } },
+        }),
+      ),
+  });
+}
+
 // ---- Provisioning ---------------------------------------------------------------------------
 
 export function useProvisionDevice() {

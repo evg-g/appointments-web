@@ -22,6 +22,8 @@ import {
 } from "@/components/ui";
 import { formatDateTime } from "@/lib/datetime";
 
+import { AuditActor, AuditEntity } from "./AuditNames";
+
 const ENTITY_TYPES = ["appointment", "device", "excursion", "clinic", "service", "user"] as const;
 
 export function AuditLog() {
@@ -116,12 +118,11 @@ export function AuditLog() {
                       <Badge variant="neutral">{entry.action}</Badge>
                     </TD>
                     <TD>
-                      <span className="text-fg">{entry.entity_type}</span>
-                      {/* text-muted, not text-subtle: this id is meaningful content and must meet
-                          WCAG AA contrast (the a11y gate caught text-subtle at 4.08:1). */}
-                      <span className="ml-1 text-muted">{entry.entity_id.slice(0, 8)}</span>
+                      <AuditEntity type={entry.entity_type} id={entry.entity_id} />
                     </TD>
-                    <TD className="text-muted">{entry.actor_id?.slice(0, 8) ?? "system"}</TD>
+                    <TD>
+                      <AuditActor actorId={entry.actor_id} />
+                    </TD>
                   </TR>
                 ))}
               </TBody>
