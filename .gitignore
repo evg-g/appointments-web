@@ -40,3 +40,4 @@ npm-debug.log*
 # Local Claude Code / Impeccable tooling (installed per machine, not part of the app).
 .claude/
 .impeccable/config.local.json
+.impeccable/hook.cache.json

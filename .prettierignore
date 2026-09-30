@@ -25,3 +25,4 @@ CHANGELOG.md
 # Local Claude Code / Impeccable tooling (the skill is installed per machine).
 .claude/
 .impeccable/config.local.json
+.impeccable/hook.cache.json
