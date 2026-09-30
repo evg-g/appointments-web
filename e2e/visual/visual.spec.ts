@@ -37,6 +37,9 @@ for (const theme of THEMES) {
       await page.goto("/");
       await expect(page.getByRole("heading", { level: 1, name: /Welcome,/ })).toBeVisible();
       await expect(page.getByText(/No upcoming appointments/i)).toBeVisible();
+      // Wait for the cold-chain card's per-device health, so the shot never catches a skeleton.
+      await expect(page.getByText("1 open excursion")).toBeVisible();
+      await expect(page.getByText("Not reporting yet")).toBeVisible();
       await expect(page).toHaveScreenshot(`dashboard-${theme}.png`, { fullPage: true });
     });
 

@@ -1,4 +1,4 @@
-import { CalendarPlus, CalendarRange, Thermometer } from "lucide-react";
+import { CalendarPlus, CalendarRange } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { flattenAppointments, useAppointments } from "@/api/hooks";
@@ -7,6 +7,7 @@ import { useAuth } from "@/auth/useAuth";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge, Button, EmptyState, QueryBoundary, SimpleCard, Spinner } from "@/components/ui";
 import { formatDateTime } from "@/lib/datetime";
+import { ColdChainSummary } from "@/features/cold-chain/ColdChainSummary";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/features/appointments/status";
 import { upcomingAppointments } from "@/features/appointments/upcoming";
 
@@ -14,7 +15,9 @@ import { upcomingAppointments } from "@/features/appointments/upcoming";
 export function DashboardRoute() {
   const { user } = useAuth();
   const firstName = user?.full_name.split(" ")[0] ?? "there";
-  const appointmentsQuery = useAppointments({ limit: 5 });
+  // The list is newest-first, so a page of 5 would hold the furthest-out bookings, not the next
+  // ones. Fetch one larger page and let upcomingAppointments() pick the soonest five.
+  const appointmentsQuery = useAppointments({ limit: 50 });
   const upcoming = upcomingAppointments(flattenAppointments(appointmentsQuery.data), Date.now(), 5);
 
   return (
@@ -102,16 +105,7 @@ export function DashboardRoute() {
           }
         >
           <SimpleCard title="Cold-chain status">
-            <EmptyState
-              icon={Thermometer}
-              title="Monitor your fridges"
-              description="Live temperature, device health, and excursion alerts."
-              action={
-                <Button asChild size="sm" variant="secondary">
-                  <Link to="/cold-chain">Open cold chain</Link>
-                </Button>
-              }
-            />
+            <ColdChainSummary />
           </SimpleCard>
         </RoleGate>
       </div>
