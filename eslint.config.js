@@ -21,6 +21,7 @@ export default tseslint.config(
       "node_modules",
       "src/api/schema.d.ts",
       "public/mockServiceWorker.js",
+      ".claude",
     ],
   },
   {
