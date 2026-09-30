@@ -166,6 +166,13 @@ export const handlers = [
   http.get("/api/v1/users/:user_id", ({ request, params }) => {
     const auth = requireAuth(request);
     if (auth instanceof Response) return auth;
+    // As in the real API: a platform admin may read any user, everyone else only themselves.
+    if (auth.role !== "PLATFORM_ADMIN" && auth.id !== params["user_id"]) {
+      return HttpResponse.json(
+        problem(403, "Forbidden", "You may only read your own user record."),
+        { status: 403 },
+      );
+    }
     const user = db.users.find((u) => u.id === params["user_id"]);
     if (user === undefined) {
       return HttpResponse.json(problem(404, "Not Found", "User not found."), { status: 404 });
@@ -287,7 +294,16 @@ export const handlers = [
   http.get("/api/v1/appointments", ({ request }) => {
     const auth = requireAuth(request);
     if (auth instanceof Response) return auth;
-    const ordered = [...db.appointments].sort(
+    // Scoped like the real API: a patient sees their own, a clinician their clinic's, admins all.
+    const clinicianClinic = db.clinicians.find((c) => c.user_id === auth.id)?.clinic_id;
+    const visible = db.appointments.filter((appointment) =>
+      auth.role === "PATIENT"
+        ? appointment.patient_id === auth.id
+        : auth.role === "CLINICIAN"
+          ? appointment.clinic_id === clinicianClinic
+          : true,
+    );
+    const ordered = [...visible].sort(
       (a, b) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime(),
     );
     return HttpResponse.json(paginate(ordered, new URL(request.url)));
@@ -436,7 +452,12 @@ export const handlers = [
     return HttpResponse.json({
       device_id: device.id,
       last_seen_at: device.last_seen_at,
-      last_temperature_c: device.status === "ACTIVE" ? 4.6 : null,
+      last_temperature_c:
+        device.status !== "ACTIVE"
+          ? null
+          : db.baselineC.has(device.id)
+            ? (buildTelemetry(device.id, 300, "avg").points.at(-1)?.value ?? null)
+            : 4.6,
       last_battery_pct: device.status === "ACTIVE" ? 87 : null,
       open_excursions: openExcursions,
       status: device.status,
