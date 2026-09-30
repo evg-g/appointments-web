@@ -18,6 +18,7 @@ test("dashboard", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1, name: /Welcome,/ })).toBeVisible();
   await expect(page.getByText(/No upcoming appointments/i)).toBeHidden();
+  await expect(page.getByText("1 open excursion")).toBeVisible();
   await shot(page, "dashboard");
 });
 
@@ -53,7 +54,8 @@ test("cold chain", async ({ page }) => {
 test("admin audit log", async ({ page }) => {
   await seedSession(page, "PLATFORM_ADMIN");
   await page.goto("/admin/audit");
-  await expect(page.getByText("appointment.confirmed")).toBeVisible();
+  await expect(page.getByText("appointment.confirmed").first()).toBeVisible();
+  await expect(page.getByText("Aurora Northside")).toBeVisible();
   await shot(page, "admin");
 });
 
