@@ -1,0 +1,35 @@
+# Keep the build context small and reproducible. The builder stage runs `npm ci` and then
+# `COPY . .`, so without this a local node_modules (and every build/test output) would be sent to
+# Docker and overwrite the clean install. Only dist/ reaches the runtime image.
+# Do not exclude .storybook/: `tsc --noEmit` in `npm run build` type-checks it.
+
+# Dependencies (installed by npm ci inside the image)
+node_modules/
+
+# VCS, CI, local tooling
+.git
+.github
+.claude/
+.impeccable/
+.env
+.env.*
+!.env.example
+
+# Build and test outputs
+dist/
+dist-e2e/
+dist-demo/
+dist-pages/
+storybook-static/
+coverage/
+playwright-report/
+playwright-report-composed/
+test-results/
+lighthouse-report/
+.lighthouseci/
+
+# Editors / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
