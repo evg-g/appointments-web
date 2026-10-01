@@ -38,11 +38,16 @@ C:*
 npm-debug.log*
 
 # Local Claude Code / Impeccable tooling (installed per machine, not part of the app).
-# Only the two QA subagents are tracked; settings, skills and other agents stay local.
+# Tracked: the QA toolkit (github.com/evg-g/qa-ai-toolkit) - the two QA subagents, their facts
+# file, and the e2e-test-generation skill. Settings, other skills and other agents stay local.
 .claude/*
 !.claude/agents/
 .claude/agents/*
 !.claude/agents/qa-tester.md
 !.claude/agents/qa-reviewer.md
+!.claude/qa/
+!.claude/skills/
+.claude/skills/*
+!.claude/skills/e2e-test-generation/
 .impeccable/config.local.json
 .impeccable/hook.cache.json
