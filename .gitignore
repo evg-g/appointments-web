@@ -49,5 +49,7 @@ npm-debug.log*
 !.claude/skills/
 .claude/skills/*
 !.claude/skills/e2e-test-generation/
+# ADLC: which test command proves which surface (plugin: qa-ai-toolkit/plugins/adlc).
+!.claude/surface-bindings.json
 .impeccable/config.local.json
 .impeccable/hook.cache.json
