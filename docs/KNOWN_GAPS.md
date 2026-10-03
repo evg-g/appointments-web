@@ -9,6 +9,17 @@ Things not yet complete, with the exact reason. Kept honest; updated as gaps clo
   `playwright.composed.config.ts`. The spec files are unchanged; only `e2e/support/helpers.ts`
   branches on `E2E_BACKEND` (real login + `page.route()` error injection). CI: the `e2e-composed`
   job, gated behind `vars.API_REPO`. Verified locally: 11/11. See ADR 0007 + `docs/CI_CD.md`.
+- **One composed-stack journey is flaky — open.** `manage.spec.ts` "transitions a booked
+  appointment through confirm then cancel" failed once in CI and passed on the retry, so the job
+  reports green (`retries: 1`) with `1 flaky` in the summary. The failure is at the first
+  assertion after the transition: `getByText("Confirmed", { exact: true })` never appears within
+  the 10s expect timeout, so the status does not reach CONFIRMED in the UI — not a near-miss
+  race. It has been seen once in three CI runs and does **not** reproduce locally: 8 plain runs
+  and 6 more with all 14 cores saturated (runtime 20s → 57s) all passed. The suspicion is an
+  ETag/If-Match ordering race between the booking that precedes it and the transition that
+  follows, which only opens under a slow, contended runner. Not yet diagnosed, and recorded here
+  rather than hidden behind the retry. Only the composed tier is affected; the MSW `e2e` job
+  runs the same spec against deterministic mocks.
 - **a11y + visual tiers stay on the MSW build.** Only the journeys run against the composed stack.
   The a11y sweep needs every route fully populated and the visual baselines are pixel- and
   engine-specific — re-proving them against a live backend adds flakiness without adding signal, so
