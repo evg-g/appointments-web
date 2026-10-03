@@ -47,7 +47,9 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Non-privileged port so the container needs no extra capabilities.
 EXPOSE 8080
+# 127.0.0.1, not localhost: nginx listens on IPv4 only, and BusyBox wget tries ::1 first wherever
+# the container has an IPv6 loopback, failing with "connection refused" without falling back.
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-    CMD wget -q --spider http://localhost:8080/ || exit 1
+    CMD wget -q --spider http://127.0.0.1:8080/ || exit 1
 
 # The base image's entrypoint runs envsubst over the template, then execs `nginx -g 'daemon off;'`.

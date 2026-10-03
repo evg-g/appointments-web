@@ -106,8 +106,18 @@ services:
     depends_on:
       api:
         condition: service_healthy
+      # Also gates `up --wait`: without a service_completed_successfully edge, compose waits for
+      # this one-shot to stay running and reports "seed-admin exited (0)" as a failure. Declaring
+      # it here is also the honest ordering — the host seed script logs in as the admin it creates.
+      seed-admin:
+        condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/"]
+      # 127.0.0.1, not localhost: nginx listens on IPv4 only (the template sets `listen 8080`, and
+      # the base image's IPv6 patch is overwritten when envsubst renders the template over it).
+      # BusyBox wget resolves localhost to ::1 first wherever the container has an IPv6 loopback,
+      # and fails with "connection refused" without retrying IPv4 — so the probe never reaches
+      # nginx and the container never turns healthy.
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/"]
       interval: 5s
       timeout: 3s
       retries: 20
