@@ -7,6 +7,10 @@ Part of **[Aurora Clinic](https://github.com/evg-g/aurora)** — three repos, on
 
 **[Live demo](https://evg-g.github.io/appointments-web/)** · **[Latest Playwright report](https://evg-g.github.io/appointments-web/report/)**
 
+![The cold-chain dashboard: live fridge temperature with an excursion above the safe band](docs/screenshots/cold-chain.png)
+
+<sub>A real rendered page from the production build with its mock backend, captured by Playwright (`npm run screenshots`).</sub>
+
 The web front end for **Aurora Clinic** — appointment scheduling and cold-chain monitoring.
 React 19, TypeScript (strict), Vite, Tailwind v4.
 
@@ -19,7 +23,38 @@ views, and a live cold-chain dashboard. It is where design-token discipline, acc
 and the four async states (loading / empty / error / success) are applied, and where the
 API client is generated from the backend's OpenAPI schema rather than hand-written.
 
-## Status
+## Quick start
+
+```bash
+# WSL (Ubuntu-24.04)
+make setup             # npm ci (or npm install on first run)
+make dev               # start Vite on http://localhost:5173
+make test              # run Vitest
+make storybook         # component workshop on http://localhost:6006
+make ci-local          # lint + typecheck + test + client drift check
+
+# Browser tiers — need the Playwright Chromium browser:
+make setup-e2e         # install Chromium
+make e2e               # E2E journeys + a11y + visual (builds the MSW app and previews it)
+make bundle-check      # enforce the gzipped bundle-size budget
+make lighthouse        # LCP/CLS/TBT budgets against the prod build
+
+# Composed-stack E2E (milestone 15) — needs Docker + the sibling appointments-api repo:
+make e2e-composed-all  # build images → compose up → seed → run journeys → tear down
+```
+
+Seed logins for the mock/dev server (`VITE_ENABLE_MSW=true npm run dev`), all with password
+`password123`: `patient@aurora.test`, `clinician@aurora.test`, `admin@aurora.test`. The composed
+stack uses the same local parts on an ordinary domain (`@aurora-clinic.com`), since the real API
+rejects the reserved `.test` TLD.
+
+## Build history
+
+What each milestone delivered, newest first.
+
+<details>
+<summary>Milestones 12–15</summary>
+
 
 Milestone 15 (web CI/CD complete) complete:
 
@@ -99,30 +134,8 @@ Milestone 12 (web foundation) complete:
 - **MSW mocks** (`src/mocks/`) — handlers typed against the generated OpenAPI types, shared by
   Vitest and the dev server. Storybook for every primitive, with the a11y (axe) addon.
 
-## Quick start
 
-```bash
-# WSL (Ubuntu-24.04)
-make setup             # npm ci (or npm install on first run)
-make dev               # start Vite on http://localhost:5173
-make test              # run Vitest
-make storybook         # component workshop on http://localhost:6006
-make ci-local          # lint + typecheck + test + client drift check
-
-# Browser tiers — need the Playwright Chromium browser:
-make setup-e2e         # install Chromium
-make e2e               # E2E journeys + a11y + visual (builds the MSW app and previews it)
-make bundle-check      # enforce the gzipped bundle-size budget
-make lighthouse        # LCP/CLS/TBT budgets against the prod build
-
-# Composed-stack E2E (milestone 15) — needs Docker + the sibling appointments-api repo:
-make e2e-composed-all  # build images → compose up → seed → run journeys → tear down
-```
-
-Seed logins for the mock/dev server (`VITE_ENABLE_MSW=true npm run dev`), all with password
-`password123`: `patient@aurora.test`, `clinician@aurora.test`, `admin@aurora.test`. The composed
-stack uses the same local parts on an ordinary domain (`@aurora-clinic.com`), since the real API
-rejects the reserved `.test` TLD.
+</details>
 
 ## The generated API client
 
@@ -152,6 +165,18 @@ src/
   theme/       theme provider + hook
   test/        Vitest setup and render helpers
 ```
+
+## Docs
+
+| Doc | What it covers |
+|---|---|
+| [`docs/BROWSER_TESTING.md`](docs/BROWSER_TESTING.md) | The browser tiers: E2E journeys, accessibility, visual regression, layout rules, and the performance budgets. |
+| [`docs/EXERCISES.md`](docs/EXERCISES.md) | Break-it-on-purpose exercises: make the change, predict which gate fails, run it, confirm. |
+| [`docs/CI_CD.md`](docs/CI_CD.md) | The pipeline, the Pages demo, and the release and deploy path. |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | The nginx image and the Azure Container Apps deployment. |
+| [`docs/KNOWN_GAPS.md`](docs/KNOWN_GAPS.md) | What is deliberately not done yet, and why. |
+| [`docs/adr/`](docs/adr/) | The design decisions, one file each. |
+| [`DESIGN.md`](DESIGN.md) · [`PRODUCT.md`](PRODUCT.md) | The design tokens and the product surface. |
 
 ## License
 
