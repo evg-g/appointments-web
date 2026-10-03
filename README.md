@@ -55,7 +55,6 @@ What each milestone delivered, newest first.
 <details>
 <summary>Milestones 12–15</summary>
 
-
 Milestone 15 (web CI/CD complete) complete:
 
 - **Composed-stack E2E** — the milestone-14 journeys now also run against the fully composed stack
@@ -134,7 +133,6 @@ Milestone 12 (web foundation) complete:
 - **MSW mocks** (`src/mocks/`) — handlers typed against the generated OpenAPI types, shared by
   Vitest and the dev server. Storybook for every primitive, with the a11y (axe) addon.
 
-
 </details>
 
 ## The generated API client
@@ -168,15 +166,15 @@ src/
 
 ## Docs
 
-| Doc | What it covers |
-|---|---|
-| [`docs/BROWSER_TESTING.md`](docs/BROWSER_TESTING.md) | The browser tiers: E2E journeys, accessibility, visual regression, layout rules, and the performance budgets. |
-| [`docs/EXERCISES.md`](docs/EXERCISES.md) | Break-it-on-purpose exercises: make the change, predict which gate fails, run it, confirm. |
-| [`docs/CI_CD.md`](docs/CI_CD.md) | The pipeline, the Pages demo, and the release and deploy path. |
-| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | The nginx image and the Azure Container Apps deployment. |
-| [`docs/KNOWN_GAPS.md`](docs/KNOWN_GAPS.md) | What is deliberately not done yet, and why. |
-| [`docs/adr/`](docs/adr/) | The design decisions, one file each. |
-| [`DESIGN.md`](DESIGN.md) · [`PRODUCT.md`](PRODUCT.md) | The design tokens and the product surface. |
+| Doc                                                   | What it covers                                                                                                |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| [`docs/BROWSER_TESTING.md`](docs/BROWSER_TESTING.md)  | The browser tiers: E2E journeys, accessibility, visual regression, layout rules, and the performance budgets. |
+| [`docs/EXERCISES.md`](docs/EXERCISES.md)              | Break-it-on-purpose exercises: make the change, predict which gate fails, run it, confirm.                    |
+| [`docs/CI_CD.md`](docs/CI_CD.md)                      | The pipeline, the Pages demo, and the release and deploy path.                                                |
+| [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)            | The nginx image and the Azure Container Apps deployment.                                                      |
+| [`docs/KNOWN_GAPS.md`](docs/KNOWN_GAPS.md)            | What is deliberately not done yet, and why.                                                                   |
+| [`docs/adr/`](docs/adr/)                              | The design decisions, one file each.                                                                          |
+| [`DESIGN.md`](DESIGN.md) · [`PRODUCT.md`](PRODUCT.md) | The design tokens and the product surface.                                                                    |
 
 ## License
 
