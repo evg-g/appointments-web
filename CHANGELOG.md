@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/evg-g/appointments-web/compare/v1.1.0...v1.1.1) (2026-10-03)
+
+
+### Bug Fixes
+
+* **e2e:** bring the composed stack up reliably ([40e5aee](https://github.com/evg-g/appointments-web/commit/40e5aeea956270c697b6dbfea9397805cf502bba))
+
 ## [1.1.0](https://github.com/evg-g/appointments-web/compare/v1.0.0...v1.1.0) (2026-10-01)
 
 
