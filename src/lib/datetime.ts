@@ -62,6 +62,55 @@ export function formatColumnLabel(iso: string, timeZone?: string): string {
   ).format(new Date(iso));
 }
 
+/** Short zone name for `timeZone` at the instant `iso`, e.g. "PDT" or "GMT+3". */
+export function formatTimeZoneLabel(
+  timeZone: string,
+  iso: string = new Date().toISOString(),
+): string {
+  const part = new Intl.DateTimeFormat("en-US", { timeZone, timeZoneName: "short" })
+    .formatToParts(new Date(iso))
+    .find((p) => p.type === "timeZoneName");
+  return part?.value ?? timeZone;
+}
+
+/** Offset of `timeZone` from UTC at `instant`, in milliseconds (positive east of UTC). */
+function zoneOffsetMs(instant: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(instant);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((p) => p.type === type)?.value ?? 0);
+  const wallAsUtc = Date.UTC(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour"),
+    get("minute"),
+    get("second"),
+  );
+  return wallAsUtc - (instant.getTime() - instant.getMilliseconds());
+}
+
+/**
+ * The instant at which the wall clock in `timeZone` reads `day` (YYYY-MM-DD) `time` (HH:MM[:SS]).
+ * Independent of the runtime's own zone. Across a DST change the offset is re-checked at the
+ * result, so a time on either side of the change resolves correctly.
+ */
+export function zonedWallTimeToUtc(day: string, time: string, timeZone: string): Date {
+  const [year, month, date] = day.split("-").map(Number);
+  const [hour = 0, minute = 0, second = 0] = time.split(":").map(Number);
+  const wallAsUtc = Date.UTC(year ?? 1970, (month ?? 1) - 1, date ?? 1, hour, minute, second);
+  const guess = wallAsUtc - zoneOffsetMs(new Date(wallAsUtc), timeZone);
+  return new Date(wallAsUtc - zoneOffsetMs(new Date(guess), timeZone));
+}
+
 /** A local YYYY-MM-DD string for `date` (used as the availability `day` query param). */
 export function toIsoDate(date: Date): string {
   const year = date.getFullYear();

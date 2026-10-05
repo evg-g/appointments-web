@@ -4,10 +4,12 @@ import {
   addDays,
   formatRelative,
   formatTime,
+  formatTimeZoneLabel,
   startOfWeek,
   toIsoDate,
   weekDays,
   weekdayName,
+  zonedWallTimeToUtc,
 } from "./datetime";
 
 describe("datetime helpers", () => {
@@ -52,5 +54,42 @@ describe("datetime helpers", () => {
   it("formatTime honours an explicit timezone", () => {
     // 17:30 UTC is 09:30 in Los Angeles.
     expect(formatTime("2026-01-01T17:30:00Z", "America/Los_Angeles")).toMatch(/09:30/);
+  });
+});
+
+describe("zonedWallTimeToUtc", () => {
+  it("reads a wall-clock time in Los Angeles in winter (PST, UTC-8)", () => {
+    expect(zonedWallTimeToUtc("2026-01-05", "09:00", "America/Los_Angeles").toISOString()).toBe(
+      "2026-01-05T17:00:00.000Z",
+    );
+  });
+
+  it("reads a wall-clock time in Los Angeles in summer (PDT, UTC-7)", () => {
+    expect(zonedWallTimeToUtc("2026-10-06", "09:00", "America/Los_Angeles").toISOString()).toBe(
+      "2026-10-06T16:00:00.000Z",
+    );
+  });
+
+  it("uses the new offset after a DST change on the same day", () => {
+    // Clocks went forward at 02:00 on 2026-03-08 in Los Angeles.
+    expect(zonedWallTimeToUtc("2026-03-08", "01:00", "America/Los_Angeles").toISOString()).toBe(
+      "2026-03-08T09:00:00.000Z",
+    );
+    expect(zonedWallTimeToUtc("2026-03-08", "09:00", "America/Los_Angeles").toISOString()).toBe(
+      "2026-03-08T16:00:00.000Z",
+    );
+  });
+
+  it("handles a zone ahead of UTC and seconds", () => {
+    expect(zonedWallTimeToUtc("2026-10-06", "12:20:30", "Asia/Jerusalem").toISOString()).toBe(
+      "2026-10-06T09:20:30.000Z",
+    );
+  });
+});
+
+describe("formatTimeZoneLabel", () => {
+  it("names the zone at the given instant", () => {
+    expect(formatTimeZoneLabel("America/Los_Angeles", "2026-01-05T17:00:00Z")).toBe("PST");
+    expect(formatTimeZoneLabel("America/Los_Angeles", "2026-10-06T16:00:00Z")).toBe("PDT");
   });
 });

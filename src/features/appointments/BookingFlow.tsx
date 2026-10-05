@@ -30,7 +30,7 @@ import {
   Spinner,
 } from "@/components/ui";
 import { parseApiError } from "@/api/errors";
-import { formatDate, formatTime, toIsoDate } from "@/lib/datetime";
+import { formatDate, formatTime, formatTimeZoneLabel, toIsoDate } from "@/lib/datetime";
 import { formatDuration, formatMoney } from "@/lib/units";
 
 const STEPS = ["Clinic", "Service", "Clinician", "Time", "Confirm"] as const;
@@ -226,26 +226,38 @@ export function BookingFlow() {
                 }
               >
                 {(slots) => (
-                  <div role="listbox" aria-label="Available times" className="flex flex-wrap gap-2">
-                    {slots.map((option: SlotOut) => {
-                      const selected = slot?.start === option.start;
-                      return (
-                        <button
-                          key={option.start}
-                          type="button"
-                          role="option"
-                          aria-selected={selected}
-                          onClick={() => setSlot(option)}
-                          className={
-                            selected
-                              ? "rounded-md border border-accent bg-accent px-3 py-2 text-sm text-accent-fg"
-                              : "rounded-md border border-line bg-surface px-3 py-2 text-sm text-fg hover:border-accent"
-                          }
-                        >
-                          {formatTime(option.start)}
-                        </button>
-                      );
-                    })}
+                  <div className="flex flex-col gap-2">
+                    {selectedClinic !== undefined && (
+                      <p className="text-sm text-muted">
+                        Times are in the clinic&apos;s time zone (
+                        {formatTimeZoneLabel(selectedClinic.timezone, slots[0]?.start)}).
+                      </p>
+                    )}
+                    <div
+                      role="listbox"
+                      aria-label="Available times"
+                      className="flex flex-wrap gap-2"
+                    >
+                      {slots.map((option: SlotOut) => {
+                        const selected = slot?.start === option.start;
+                        return (
+                          <button
+                            key={option.start}
+                            type="button"
+                            role="option"
+                            aria-selected={selected}
+                            onClick={() => setSlot(option)}
+                            className={
+                              selected
+                                ? "rounded-md border border-accent bg-accent px-3 py-2 text-sm text-accent-fg"
+                                : "rounded-md border border-line bg-surface px-3 py-2 text-sm text-fg hover:border-accent"
+                            }
+                          >
+                            {formatTime(option.start, selectedClinic?.timezone)}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </QueryBoundary>

@@ -20,7 +20,9 @@ describe("dashboard upcoming appointments", () => {
     await loginAs("admin@aurora.test");
     renderApp("/");
     const firstRow = (await screen.findAllByRole("link", { name: /\d{4}/ }))[0];
-    expect(firstRow).toHaveTextContent(formatDateTime(soonest.starts_at));
+    // Shown in the clinic's zone (spec §2), not the test runtime's UTC.
+    const timeZone = db.clinics.find((c) => c.id === soonest.clinic_id)?.timezone;
+    expect(firstRow).toHaveTextContent(formatDateTime(soonest.starts_at, timeZone));
   });
 });
 

@@ -6,6 +6,7 @@ import {
   useService,
   useUser,
 } from "@/api/hooks";
+import { useClinicTimeZones } from "@/features/appointments/useClinicTimeZones";
 import { formatDateTime } from "@/lib/datetime";
 
 /*
@@ -83,8 +84,14 @@ function DeviceName({ id }: { id: string }) {
 }
 
 function AppointmentName({ id }: { id: string }) {
-  const startsAt = useAppointment(id).data?.appointment.starts_at;
-  return <Named name={startsAt !== undefined ? formatDateTime(startsAt) : undefined} id={id} />;
+  const appointment = useAppointment(id).data?.appointment;
+  const timeZone = useClinicTimeZones().get(appointment?.clinic_id ?? "");
+  return (
+    <Named
+      name={appointment !== undefined ? formatDateTime(appointment.starts_at, timeZone) : undefined}
+      id={id}
+    />
+  );
 }
 
 function ExcursionName({ id }: { id: string }) {
