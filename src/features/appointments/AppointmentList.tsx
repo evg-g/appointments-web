@@ -18,7 +18,7 @@ import {
   THead,
   TR,
 } from "@/components/ui";
-import { formatDateTime } from "@/lib/datetime";
+import { formatDateTime, zoneSuffix } from "@/lib/datetime";
 
 import { STATUS_LABEL, STATUS_VARIANT } from "./status";
 import { useClinicTimeZones } from "./useClinicTimeZones";
@@ -100,6 +100,10 @@ export function AppointmentList() {
                         {formatDateTime(
                           appointment.starts_at,
                           clinicTimeZones.get(appointment.clinic_id),
+                        )}
+                        {zoneSuffix(
+                          clinicTimeZones.get(appointment.clinic_id),
+                          appointment.starts_at,
                         )}
                       </Link>
                     </TD>

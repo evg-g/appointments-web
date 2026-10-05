@@ -6,7 +6,7 @@ import { RoleGate } from "@/auth/RoleGate";
 import { useAuth } from "@/auth/useAuth";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge, Button, EmptyState, QueryBoundary, SimpleCard, Spinner } from "@/components/ui";
-import { formatDateTime } from "@/lib/datetime";
+import { formatDateTime, zoneSuffix } from "@/lib/datetime";
 import { ColdChainSummary } from "@/features/cold-chain/ColdChainSummary";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/features/appointments/status";
 import { upcomingAppointments } from "@/features/appointments/upcoming";
@@ -85,6 +85,10 @@ export function DashboardRoute() {
                         {formatDateTime(
                           appointment.starts_at,
                           clinicTimeZones.get(appointment.clinic_id),
+                        )}
+                        {zoneSuffix(
+                          clinicTimeZones.get(appointment.clinic_id),
+                          appointment.starts_at,
                         )}
                       </span>
                       <Badge variant={STATUS_VARIANT[appointment.status]}>

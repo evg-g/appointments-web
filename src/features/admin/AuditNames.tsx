@@ -7,7 +7,7 @@ import {
   useUser,
 } from "@/api/hooks";
 import { useClinicTimeZones } from "@/features/appointments/useClinicTimeZones";
-import { formatDateTime } from "@/lib/datetime";
+import { formatDateTime, zoneSuffix } from "@/lib/datetime";
 
 /*
  * Readable names for the audit log. An entry only carries ids, so each cell looks its entity up
@@ -88,7 +88,12 @@ function AppointmentName({ id }: { id: string }) {
   const timeZone = useClinicTimeZones().get(appointment?.clinic_id ?? "");
   return (
     <Named
-      name={appointment !== undefined ? formatDateTime(appointment.starts_at, timeZone) : undefined}
+      name={
+        appointment !== undefined
+          ? formatDateTime(appointment.starts_at, timeZone) +
+            zoneSuffix(timeZone, appointment.starts_at)
+          : undefined
+      }
       id={id}
     />
   );

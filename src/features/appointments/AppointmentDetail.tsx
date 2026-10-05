@@ -25,7 +25,7 @@ import {
   QueryBoundary,
   Textarea,
 } from "@/components/ui";
-import { formatDate, formatTime } from "@/lib/datetime";
+import { formatDate, formatTime, zoneSuffix } from "@/lib/datetime";
 
 import { canCancel, isTerminal, STATUS_LABEL, STATUS_VARIANT, TRANSITION_TARGETS } from "./status";
 
@@ -86,6 +86,7 @@ function DetailBody({ id, data }: { id: string; data: AppointmentDetailData }) {
             <dd className="text-fg tabular-nums">
               {formatTime(appointment.starts_at, timezone)}–
               {formatTime(appointment.ends_at, timezone)}
+              {zoneSuffix(timezone, appointment.starts_at)}
             </dd>
             <dt className="text-muted">Clinic</dt>
             <dd className="text-fg">{clinicQuery.data?.name ?? "…"}</dd>
