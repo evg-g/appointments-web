@@ -18,6 +18,8 @@ import type {
   UserOut,
 } from "@/api/types";
 
+import { zonedWallTimeToUtc } from "@/lib/datetime";
+
 import { SEED_ACCOUNTS } from "./data";
 
 // Stable ids so tests can assert against them.
@@ -551,8 +553,11 @@ export function computeAvailability(
   const service = serviceById(serviceId);
   if (clinician === undefined || service === undefined) return [];
 
-  const date = new Date(`${day}T00:00:00`);
-  const weekday = (date.getDay() + 6) % 7; // 0 = Monday
+  // Working hours are wall-clock times in the clinic's zone, as the real API treats them (API ADR
+  // 0003). Building them in the browser's zone shifted every slot by the viewer's UTC offset.
+  const timeZone =
+    db.clinics.find((clinic) => clinic.id === clinician.clinic_id)?.timezone ?? "UTC";
+  const weekday = (new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7; // 0 = Monday
   const windows = clinician.working_hours.filter((window) => window.weekday === weekday);
   const step = service.duration_minutes + clinician.buffer_minutes;
 
@@ -565,8 +570,8 @@ export function computeAvailability(
 
   const slots: SlotOut[] = [];
   for (const window of windows) {
-    const start = new Date(`${day}T${window.start}`);
-    const end = new Date(`${day}T${window.end}`);
+    const start = zonedWallTimeToUtc(day, window.start, timeZone);
+    const end = zonedWallTimeToUtc(day, window.end, timeZone);
     for (
       let cursor = new Date(start);
       cursor.getTime() + service.duration_minutes * 60_000 <= end.getTime();

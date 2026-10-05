@@ -10,6 +10,7 @@ import { formatDateTime } from "@/lib/datetime";
 import { ColdChainSummary } from "@/features/cold-chain/ColdChainSummary";
 import { STATUS_LABEL, STATUS_VARIANT } from "@/features/appointments/status";
 import { upcomingAppointments } from "@/features/appointments/upcoming";
+import { useClinicTimeZones } from "@/features/appointments/useClinicTimeZones";
 
 /** The landing page: a greeting, quick actions, a peek at upcoming appointments, and cold chain. */
 export function DashboardRoute() {
@@ -19,6 +20,7 @@ export function DashboardRoute() {
   // ones. Fetch one larger page and let upcomingAppointments() pick the soonest five.
   const appointmentsQuery = useAppointments({ limit: 50 });
   const upcoming = upcomingAppointments(flattenAppointments(appointmentsQuery.data), Date.now(), 5);
+  const clinicTimeZones = useClinicTimeZones();
 
   return (
     <>
@@ -80,7 +82,10 @@ export function DashboardRoute() {
                       className="flex items-center justify-between gap-2 py-2 hover:text-accent"
                     >
                       <span className="text-sm tabular-nums text-fg">
-                        {formatDateTime(appointment.starts_at)}
+                        {formatDateTime(
+                          appointment.starts_at,
+                          clinicTimeZones.get(appointment.clinic_id),
+                        )}
                       </span>
                       <Badge variant={STATUS_VARIANT[appointment.status]}>
                         {STATUS_LABEL[appointment.status]}

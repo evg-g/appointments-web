@@ -60,4 +60,27 @@ describe("booking flow", { timeout: 15_000 }, () => {
     // Still on the confirm step.
     expect(screen.getByRole("button", { name: /confirm booking/i })).toBeInTheDocument();
   });
+
+  it("shows slots in the clinic's time zone, the same time as the confirm step", async () => {
+    // The runtime is UTC (vite.config.ts) and the clinic is in Los Angeles, so a slot rendered in
+    // the browser's zone would read 8 hours off from the confirm step.
+    const user = userEvent.setup();
+    renderApp("/appointments/new");
+
+    await user.selectOptions(await screen.findByLabelText("Clinic"), CLINIC_A);
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    await user.selectOptions(await screen.findByLabelText("Service"), SERVICE_30);
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    await user.selectOptions(await screen.findByLabelText("Clinician"), CLINICIAN_1);
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    fireEvent.change(await screen.findByLabelText("Day"), { target: { value: BOOKABLE_MONDAY } });
+
+    const first = (await screen.findAllByRole("option", { name: /\d{2}:\d{2}/ }))[0]!;
+    expect(first).toHaveTextContent(/09:00/);
+    expect(screen.getByText(/clinic's time zone \(PST\)/i)).toBeInTheDocument();
+
+    await user.click(first);
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    expect(await screen.findByText(/09:00\s*[AP]?M?\s*–/)).toBeInTheDocument();
+  });
 });

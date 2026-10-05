@@ -36,6 +36,7 @@ export function WeekCalendar() {
   const services = flattenServices(servicesQuery.data);
   const clinicians = flattenClinicians(cliniciansQuery.data);
   const days = weekDays(anchor);
+  const timeZone = clinics.find((clinic) => clinic.id === clinicId)?.timezone;
   const ready = clinicId !== "" && serviceId !== "" && clinicianId !== "";
 
   return (
@@ -124,6 +125,7 @@ export function WeekCalendar() {
                 date={date}
                 clinicianId={clinicianId}
                 serviceId={serviceId}
+                timeZone={timeZone}
               />
             ))}
           </div>
@@ -137,9 +139,11 @@ interface DayColumnProps {
   date: Date;
   clinicianId: string;
   serviceId: string;
+  /** The clinic's zone; slot times are shown in it, like the booking flow (spec §2). */
+  timeZone: string | undefined;
 }
 
-function DayColumn({ date, clinicianId, serviceId }: DayColumnProps) {
+function DayColumn({ date, clinicianId, serviceId, timeZone }: DayColumnProps) {
   const navigate = useNavigate();
   const day = toIsoDate(date);
   const query = useAvailability({ clinicianId, serviceId, day });
@@ -167,7 +171,7 @@ function DayColumn({ date, clinicianId, serviceId }: DayColumnProps) {
                 onClick={() => void navigate("/appointments/new")}
                 className="w-full rounded-md border border-line bg-surface px-2 py-1.5 text-center text-sm tabular-nums text-fg hover:border-accent hover:bg-sunken"
               >
-                {formatTime(slot.start)}
+                {formatTime(slot.start, timeZone)}
               </button>
             </li>
           ))}

@@ -21,6 +21,7 @@ import {
 import { formatDateTime } from "@/lib/datetime";
 
 import { STATUS_LABEL, STATUS_VARIANT } from "./status";
+import { useClinicTimeZones } from "./useClinicTimeZones";
 
 export function AppointmentList() {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ export function AppointmentList() {
     for (const clinic of flattenClinics(clinicsQuery.data)) map.set(clinic.id, clinic.name);
     return map;
   }, [clinicsQuery.data]);
+  const clinicTimeZones = useClinicTimeZones();
 
   const appointments = flattenAppointments(query.data);
 
@@ -95,7 +97,10 @@ export function AppointmentList() {
                         className="font-medium text-fg hover:text-accent"
                         onClick={(event) => event.stopPropagation()}
                       >
-                        {formatDateTime(appointment.starts_at)}
+                        {formatDateTime(
+                          appointment.starts_at,
+                          clinicTimeZones.get(appointment.clinic_id),
+                        )}
                       </Link>
                     </TD>
                     <TD>{clinicNames.get(appointment.clinic_id) ?? "—"}</TD>
