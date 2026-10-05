@@ -73,6 +73,14 @@ export function formatTimeZoneLabel(
   return part?.value ?? timeZone;
 }
 
+/**
+ * " PDT"-style suffix for a time shown in `timeZone`, or "" when the zone is not known yet. Appended
+ * to clinic times so a time that reads as past for a viewer elsewhere is clearly the clinic's clock.
+ */
+export function zoneSuffix(timeZone: string | undefined, iso: string): string {
+  return timeZone !== undefined ? ` ${formatTimeZoneLabel(timeZone, iso)}` : "";
+}
+
 /** Offset of `timeZone` from UTC at `instant`, in milliseconds (positive east of UTC). */
 function zoneOffsetMs(instant: Date, timeZone: string): number {
   const parts = new Intl.DateTimeFormat("en-US", {

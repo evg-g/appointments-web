@@ -81,7 +81,8 @@ describe("booking flow", { timeout: 15_000 }, () => {
 
     await user.click(first);
     await user.click(screen.getByRole("button", { name: /next/i }));
-    expect(await screen.findByText(/09:00\s*[AP]?M?\s*–/)).toBeInTheDocument();
+    // The confirm step names the clinic's zone, so a time is never read as the viewer's.
+    expect(await screen.findByText(/09:00\s*[AP]?M?\s*–.*PST/)).toBeInTheDocument();
   });
 
   it("books a second appointment after viewing the first one", async () => {

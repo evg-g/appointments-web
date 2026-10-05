@@ -30,7 +30,7 @@ import {
   Spinner,
 } from "@/components/ui";
 import { parseApiError } from "@/api/errors";
-import { formatDate, formatTime, formatTimeZoneLabel, toIsoDate } from "@/lib/datetime";
+import { formatDate, formatTime, formatTimeZoneLabel, toIsoDate, zoneSuffix } from "@/lib/datetime";
 import { formatDuration, formatMoney } from "@/lib/units";
 
 const STEPS = ["Clinic", "Service", "Clinician", "Time", "Confirm"] as const;
@@ -279,6 +279,7 @@ export function BookingFlow() {
                   {formatTime(slot.start, selectedClinic?.timezone)}
                   {"–"}
                   {formatTime(slot.end, selectedClinic?.timezone)}
+                  {zoneSuffix(selectedClinic?.timezone, slot.start)}
                 </dd>
               </dl>
 

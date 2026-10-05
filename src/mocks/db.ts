@@ -54,6 +54,12 @@ interface MockState {
   /** Idempotency-Key -> appointment id, so a replayed booking returns the original. */
   idempotency: Map<string, string>;
   seq: number;
+  /**
+   * Leave out slots that already started, as the real API does (API availability service). Only
+   * the demo dataset turns it on: it lives on the real clock, while the tests book a fixed past
+   * Monday so their results and visual baselines never move.
+   */
+  hidePastSlots: boolean;
 }
 
 function seed(): MockState {
@@ -204,6 +210,7 @@ function seed(): MockState {
     baselineC: new Map(),
     idempotency: new Map(),
     seq: 0,
+    hidePastSlots: false,
   };
 }
 
@@ -263,6 +270,7 @@ function demoUser(n: number, fullName: string, role: UserOut["role"]): UserOut {
  * The extra people are records only; the three sign-in accounts stay the seed ones.
  */
 export function seedDemoData(): void {
+  db.hidePastSlots = true;
   const clinicC = "c3333333-3333-4333-8333-000000000003";
   db.clinics.push({
     id: clinicC,
@@ -577,6 +585,7 @@ export function computeAvailability(
       cursor.getTime() + service.duration_minutes * 60_000 <= end.getTime();
       cursor = new Date(cursor.getTime() + step * 60_000)
     ) {
+      if (db.hidePastSlots && cursor.getTime() < Date.now()) continue;
       const slotStart = cursor.toISOString();
       const slotEnd = new Date(cursor.getTime() + service.duration_minutes * 60_000).toISOString();
       const clash = booked.some((appointment) =>
