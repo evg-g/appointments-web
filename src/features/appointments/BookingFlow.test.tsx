@@ -83,4 +83,21 @@ describe("booking flow", { timeout: 15_000 }, () => {
     await user.click(screen.getByRole("button", { name: /next/i }));
     expect(await screen.findByText(/09:00\s*[AP]?M?\s*–/)).toBeInTheDocument();
   });
+
+  it("books a second appointment after viewing the first one", async () => {
+    // Landing on the first booking's detail page caches a detail query under the same
+    // "appointments" prefix; the optimistic update used to treat it as a list and throw.
+    renderApp("/appointments/new");
+    await advanceToConfirm();
+    await userEvent.click(screen.getByRole("button", { name: /confirm booking/i }));
+    expect(await screen.findByText(/requested/i)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("link", { name: /all appointments/i }));
+    await userEvent.click(await screen.findByRole("link", { name: /book/i }));
+    await advanceToConfirm();
+    await userEvent.click(screen.getByRole("button", { name: /confirm booking/i }));
+
+    expect(await screen.findByText(/requested/i)).toBeInTheDocument();
+    expect(screen.queryByText(/could not book/i)).not.toBeInTheDocument();
+  });
 });
