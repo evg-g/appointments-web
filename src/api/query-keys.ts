@@ -37,6 +37,8 @@ export interface AuditListParams extends PageParams {
 export const queryKeys = {
   appointments: {
     all: ["appointments"] as const,
+    /** Prefix of every paginated appointment list (not the single-appointment detail queries). */
+    lists: ["appointments", "list"] as const,
     list: (params: PageParams = {}) => ["appointments", "list", params] as const,
     detail: (id: string) => ["appointments", "detail", id] as const,
   },

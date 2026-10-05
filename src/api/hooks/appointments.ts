@@ -89,12 +89,15 @@ export function useCreateAppointment() {
         }),
       ),
     onMutate: async ({ optimistic }) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.appointments.all });
+      // Only the paginated lists get the optimistic row. The `appointments` prefix also holds the
+      // detail queries (`{ appointment, etag }`, no `pages`); treating one as a list threw before
+      // the request was sent, so any booking after opening an appointment failed.
+      await queryClient.cancelQueries({ queryKey: queryKeys.appointments.lists });
       const previous = queryClient.getQueriesData<InfiniteData<AppointmentPage, string | null>>({
-        queryKey: queryKeys.appointments.all,
+        queryKey: queryKeys.appointments.lists,
       });
       for (const [key, data] of previous) {
-        if (data === undefined) continue;
+        if (data === undefined || !Array.isArray(data.pages)) continue;
         const [first, ...rest] = data.pages;
         if (first === undefined) continue;
         queryClient.setQueryData(key, {
@@ -111,6 +114,8 @@ export function useCreateAppointment() {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
+      // A booked (or just-taken) slot must leave the open-slot lists, or the next booking offers it.
+      void queryClient.invalidateQueries({ queryKey: queryKeys.availability.all });
     },
   });
 }
