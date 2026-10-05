@@ -49,8 +49,11 @@ test.describe("booking from another time zone", () => {
     await page.getByLabel("Day").fill(bookableDay());
 
     const slot = page.getByRole("option").first();
+    // No fixed clock time here: this journey also runs against the real API (composed stack),
+    // whose seed clinic and hours differ from the MSW seed. The exact 09:00 check is in
+    // e2e/stories/timezone/, which runs on the MSW seed only.
     const picked = (await slot.innerText()).trim();
-    expect(picked).toBe("09:00 AM");
+    expect(picked).toMatch(/^\d{2}:\d{2} [AP]M$/);
     await expect(page.getByText(/clinic's time zone/i)).toBeVisible();
 
     await slot.click();
