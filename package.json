@@ -1,7 +1,7 @@
 {
   "name": "appointments-web",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "type": "module",
   "description": "Aurora Clinic appointment scheduling and cold-chain monitoring web app",
   "license": "MIT",
