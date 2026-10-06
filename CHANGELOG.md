@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.0](https://github.com/evg-g/appointments-web/compare/v1.1.0...v1.2.0) (2026-10-06)
+
+
+### Features
+
+* **booking:** label clinic times with their zone; demo hides past slots ([e24dbbc](https://github.com/evg-g/appointments-web/commit/e24dbbcc050324dc9f4dd5603b237f263db4e1f9))
+
+
+### Bug Fixes
+
+* **booking:** a second booking no longer fails after opening an appointment ([45df759](https://github.com/evg-g/appointments-web/commit/45df759c61f0bb6f4721994705aeac5d0c05838b))
+* **booking:** show appointment times in the clinic's time zone ([de76ef7](https://github.com/evg-g/appointments-web/commit/de76ef7e9fc9b343c44087df7bb147b097dbe707))
+* **e2e:** bring the composed stack up reliably ([40e5aee](https://github.com/evg-g/appointments-web/commit/40e5aeea956270c697b6dbfea9397805cf502bba))
+
 ## [1.1.0](https://github.com/evg-g/appointments-web/compare/v1.0.0...v1.1.0) (2026-10-01)
 
 
