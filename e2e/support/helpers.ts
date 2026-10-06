@@ -1,5 +1,7 @@
 import { expect, type Page, type Route } from "@playwright/test";
 
+import { AppointmentPage, BookingWizardPage, DashboardPage, LoginPage } from "../models";
+
 /**
  * Shared helpers for the browser test tiers.
  *
@@ -209,11 +211,10 @@ export async function bootScenario(page: Page, name: ScenarioName): Promise<void
 /** Sign in through the real login form and wait for the dashboard. Used by the login journey. */
 export async function loginViaForm(page: Page, role: Role): Promise<void> {
   const account = ACCOUNTS[role];
-  await page.goto("/login");
-  await page.getByLabel("Email").fill(account.email);
-  await page.getByLabel("Password").fill(account.password);
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page.getByRole("heading", { level: 1, name: /Welcome,/ })).toBeVisible();
+  const login = new LoginPage(page);
+  await login.goto();
+  await login.signIn(account.email, account.password);
+  await new DashboardPage(page).expectLoaded();
 }
 
 // Mock mode: a fixed Monday. The MSW availability ignores "now", so a past date is fine and keeps
@@ -239,23 +240,9 @@ export function bookableDay(): string {
  * service → clinician → day/slot. Assumes an authenticated session is already seeded.
  */
 export async function walkBookingToConfirm(page: Page): Promise<void> {
-  await page.goto("/appointments/new");
-  await expect(page.getByRole("heading", { level: 1, name: "Book an appointment" })).toBeVisible();
-
-  await page.getByLabel("Clinic").selectOption({ label: "Aurora Downtown" });
-  await page.getByRole("button", { name: "Next" }).click();
-
-  await page.getByLabel("Service").selectOption({ index: 1 });
-  await page.getByRole("button", { name: "Next" }).click();
-
-  await page.getByLabel("Clinician").selectOption({ label: "General practice" });
-  await page.getByRole("button", { name: "Next" }).click();
-
-  await page.getByLabel("Day").fill(bookableDay());
-  await page.getByRole("option").first().click();
-  await page.getByRole("button", { name: "Next" }).click();
-
-  await expect(page.getByRole("button", { name: "Confirm booking" })).toBeVisible();
+  const wizard = new BookingWizardPage(page);
+  await wizard.goto();
+  await wizard.walkToConfirm({ day: bookableDay() });
 }
 
 /**
@@ -333,9 +320,9 @@ export async function bookAppointment(page: Page): Promise<string> {
   }
 
   await walkBookingToConfirm(page);
-  await page.getByRole("button", { name: "Confirm booking" }).click();
+  await new BookingWizardPage(page).confirm();
 
-  await expect(page.getByRole("heading", { level: 1, name: "Appointment" })).toBeVisible();
-  await page.waitForURL(/\/appointments\/[^/]+$/);
-  return new URL(page.url()).pathname;
+  const appointment = new AppointmentPage(page);
+  await appointment.expectLoaded();
+  return appointment.path();
 }

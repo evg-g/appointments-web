@@ -36,7 +36,9 @@ Run the dev server with mock data: `VITE_ENABLE_MSW=true npm run dev` (seed logi
 
 - Unit: Vitest (hooks, formatters, schemas).
 - Component: Vitest + Testing Library + MSW; query by role/label.
-- E2E / a11y / visual: Playwright under `e2e/`. `make e2e` runs journeys + a11y + visual against the
+- E2E / a11y / visual: Playwright under `e2e/`. Flow specs use the page objects in `e2e/models/` via
+  the fixtures in `e2e/support/fixtures.ts` (import `test`/`expect` from there); add a locator to a page
+  object, not to a spec. `make e2e` runs journeys + a11y + visual against the
   real build served by `vite preview` with the app's MSW backend (`VITE_ENABLE_MSW=true`) —
   deterministic, no Docker. Force error states through the MSW `scenarios` map, never a hand-rolled
   mock. `make e2e-update-snapshots` regenerates visual baselines (Chromium-on-Linux, committed).

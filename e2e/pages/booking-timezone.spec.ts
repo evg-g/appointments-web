@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "../support/fixtures";
 
 /**
  * The live demo, from a viewer in Israel (docs/tickets/BOOKING-TIMEZONE.md in the aurora repo).
@@ -20,15 +20,21 @@ function minutes(label: string): number {
   return ((Number(hh) % 12) + (half === "P" ? 12 : 0)) * 60 + Number(mm);
 }
 
-test("the demo offers only slots that have not started, in the clinic's zone", async ({ page }) => {
+test("the demo offers only slots that have not started, in the clinic's zone", async ({
+  page,
+  loginPage,
+  dashboard,
+  nav,
+  appointmentsList,
+  bookingWizard,
+  appointmentPage,
+}) => {
   await page.clock.setFixedTime(NOW);
 
   await test.step("Sign in to the demo", async () => {
-    await page.goto(BASE);
-    await page.getByLabel("Email").fill("admin@aurora.test");
-    await page.getByLabel("Password").fill("password123");
-    await page.getByRole("button", { name: "Sign in" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: /Welcome,/ })).toBeVisible();
+    await loginPage.goto(BASE);
+    await loginPage.signIn("admin@aurora.test", "password123");
+    await dashboard.expectLoaded();
   });
 
   await test.step("The dashboard labels appointment times with the clinic's zone", async () => {
@@ -36,29 +42,22 @@ test("the demo offers only slots that have not started, in the clinic's zone", a
   });
 
   await test.step("Today's open slots all start at or after 10:00 AM PDT", async () => {
-    await page.getByRole("link", { name: "Appointments" }).first().click();
-    await page.getByRole("link", { name: /book/i }).first().click();
-    await page.getByLabel("Clinic").selectOption({ label: "Aurora Downtown" });
-    await page.getByRole("button", { name: "Next" }).click();
-    await page.getByLabel("Service").selectOption({ index: 1 });
-    await page.getByRole("button", { name: "Next" }).click();
-    await page.getByLabel("Clinician").selectOption({ label: "General practice" });
-    await page.getByRole("button", { name: "Next" }).click();
-    await page.getByLabel("Day").fill(TODAY);
-    await expect(page.getByText("Times are in the clinic's time zone (PDT).")).toBeVisible();
+    await nav.openAppointments();
+    await appointmentsList.startBooking();
+    await bookingWizard.openTimeStep({ day: TODAY });
+    await expect(bookingWizard.timeZoneCaption).toHaveText(
+      "Times are in the clinic's time zone (PDT).",
+    );
 
-    const times = await page.getByRole("option").allInnerTexts();
+    const times = await bookingWizard.slots.allInnerTexts();
     expect(times.length).toBeGreaterThan(0);
     for (const time of times) expect(minutes(time), time).toBeGreaterThanOrEqual(10 * 60);
   });
 
   await test.step("A slot later today books, and Confirm shows its PDT time", async () => {
-    const first = page.getByRole("option").first();
-    const picked = (await first.innerText()).trim();
-    await first.click();
-    await page.getByRole("button", { name: "Next" }).click();
-    await expect(page.getByText(new RegExp(`${picked}–\\d{2}:\\d{2} [AP]M PDT`))).toBeVisible();
-    await page.getByRole("button", { name: "Confirm booking" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Appointment" })).toBeVisible();
+    const picked = await bookingWizard.pickSlot();
+    await expect(bookingWizard.when).toContainText(new RegExp(`${picked}–\\d{2}:\\d{2} [AP]M PDT`));
+    await bookingWizard.confirm();
+    await appointmentPage.expectLoaded();
   });
 });
