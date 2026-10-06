@@ -1,5 +1,3 @@
-import { test, expect } from "@playwright/test";
-
 import {
   bookAppointment,
   bookableDay,
@@ -7,23 +5,27 @@ import {
   useScenario,
   walkBookingToConfirm,
 } from "../support/helpers";
+import { expect, test } from "../support/fixtures";
 
 test.describe("booking", () => {
-  test("books an appointment and lands on its detail page", async ({ page }) => {
+  test("books an appointment and lands on its detail page", async ({ page, appointmentPage }) => {
     await seedSession(page, "PATIENT");
     const detailPath = await bookAppointment(page);
 
     expect(detailPath).toMatch(/\/appointments\/[^/]+$/);
-    await expect(page.getByText("Requested", { exact: true })).toBeVisible();
+    await expect(appointmentPage.status("Requested")).toBeVisible();
   });
 
-  test("surfaces a slot conflict and keeps the user on the confirm step", async ({ page }) => {
+  test("surfaces a slot conflict and keeps the user on the confirm step", async ({
+    page,
+    bookingWizard,
+  }) => {
     await seedSession(page, "PATIENT");
     await walkBookingToConfirm(page);
 
     // Force the API to reject the slot as just-taken by another patient (409).
     await useScenario(page, "bookingConflict");
-    await page.getByRole("button", { name: "Confirm booking" }).click();
+    await bookingWizard.confirm();
 
     await expect(page.getByText(/no longer available/i)).toBeVisible();
     await expect(page).toHaveURL(/\/appointments\/new$/);
@@ -37,31 +39,23 @@ test.describe("booking from another time zone", () => {
 
   test("the picked time is the time on the confirm step and the saved appointment", async ({
     page,
+    bookingWizard,
+    appointmentPage,
   }) => {
     await seedSession(page, "PATIENT");
-    await page.goto("/appointments/new");
-    await page.getByLabel("Clinic").selectOption({ label: "Aurora Downtown" });
-    await page.getByRole("button", { name: "Next" }).click();
-    await page.getByLabel("Service").selectOption({ index: 1 });
-    await page.getByRole("button", { name: "Next" }).click();
-    await page.getByLabel("Clinician").selectOption({ label: "General practice" });
-    await page.getByRole("button", { name: "Next" }).click();
-    await page.getByLabel("Day").fill(bookableDay());
+    await bookingWizard.goto();
+    await bookingWizard.openTimeStep({ day: bookableDay() });
 
-    const slot = page.getByRole("option").first();
     // No fixed clock time here: this journey also runs against the real API (composed stack),
     // whose seed clinic and hours differ from the MSW seed. The exact 09:00 check is in
     // e2e/stories/timezone/, which runs on the MSW seed only.
-    const picked = (await slot.innerText()).trim();
+    await expect(bookingWizard.timeZoneCaption).toBeVisible();
+    const picked = await bookingWizard.pickSlot();
     expect(picked).toMatch(/^\d{2}:\d{2} [AP]M$/);
-    await expect(page.getByText(/clinic's time zone/i)).toBeVisible();
+    await expect(bookingWizard.when).toContainText(new RegExp(`${picked}\\s*–`));
 
-    await slot.click();
-    await page.getByRole("button", { name: "Next" }).click();
-    await expect(page.getByText(new RegExp(`${picked}\\s*–`))).toBeVisible();
-
-    await page.getByRole("button", { name: "Confirm booking" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Appointment" })).toBeVisible();
-    await expect(page.getByText(new RegExp(`${picked}\\s*–`))).toBeVisible();
+    await bookingWizard.confirm();
+    await appointmentPage.expectLoaded();
+    await expect(appointmentPage.text(new RegExp(`${picked}\\s*–`))).toBeVisible();
   });
 });

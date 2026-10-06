@@ -9,8 +9,13 @@ supplying `/api/v1` — deterministic, and free of Docker/Postgres/Redis. The ra
 
 ```
 e2e/
-  support/helpers.ts     seed a session, walk the booking wizard, force error scenarios
+  models/                page objects: LoginPage, DashboardPage (+ ColdChainCard), BookingWizardPage,
+                         AppointmentPage, AppointmentsListPage, AppNav
+  support/fixtures.ts    `test` with the page objects as fixtures: async ({ bookingWizard }) => ...
+  support/helpers.ts     seed a session, force error scenarios, composed-stack arrange (uses models/)
   journeys/              login, book, transition/confirm, cancel, authz denial, error + empty states
+  stories/               one folder per ticket or bug: AURORA-1 cold-chain card, timezone booking
+  pages/                 the live-demo build (Pages): smoke + time zone, run before each deploy
   a11y/                  axe sweep: every route, light + dark, zero serious/critical
   visual/                screenshot regression: key pages, light + dark (baselines committed)
   layout/                header fits on one line at 1024/1280/1440px (see "Why layout/ exists")
@@ -21,6 +26,30 @@ lighthouserc.json        LCP / CLS / TBT budgets against the prod build
 scripts/check-bundle-size.mjs   gzipped initial + total JS budget
 scripts/lighthouse.mjs   runs Lighthouse with Playwright's Chromium
 ```
+
+## Page objects
+
+Flow specs (journeys, stories, pages) talk to the app through page objects in `e2e/models/`, not raw
+locators. A page object owns the locators and actions of one page; the spec keeps the assertions, so
+it still reads as the acceptance criteria. Specs get the page objects as fixtures by importing `test`
+and `expect` from `e2e/support/fixtures.ts`:
+
+```ts
+import { expect, test } from "../support/fixtures";
+
+test("books a slot", async ({ page, bookingWizard, appointmentPage }) => {
+  await seedSession(page, "PATIENT");
+  await bookingWizard.goto();
+  const picked = await bookingWizard.walkToConfirm({ day: bookableDay() });
+  await bookingWizard.confirm();
+  await appointmentPage.expectLoaded();
+  await expect(appointmentPage.text(new RegExp(`${picked}\\s*–`))).toBeVisible();
+});
+```
+
+Locators stay role- and label-based (`getByRole`, `getByLabel`), so a page object breaks when the UI
+loses an accessible name, not when markup moves. The a11y, visual and layout specs loop over routes and
+use `page` directly; a page object would add nothing there.
 
 ## Commands
 
