@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { AppointmentOut, AppointmentStatus } from "@/api/types";
 
-import { partitionAppointments } from "./appointmentGroups";
+import { groupByDay, partitionAppointments } from "./appointmentGroups";
 
 const NOW = Date.parse("2026-03-16T12:00:00Z");
 const HOUR = 60 * 60 * 1000;
@@ -188,5 +188,82 @@ describe("partitionAppointments", () => {
         ]),
       );
     }
+  });
+});
+
+describe("cancelled group", () => {
+  it("AC4.logic @agent-trusted cancelled holds every CANCELLED appointment, past or future, newest first", () => {
+    // Example 1: CANCELLED next week + CANCELLED last week -> both, next week's first.
+    const ex1 = partitionAppointments(
+      [
+        appt("cancelled-last-week", NOW - 7 * DAY, "CANCELLED"),
+        appt("cancelled-next-week", NOW + 7 * DAY, "CANCELLED"),
+      ],
+      NOW,
+      "CLINICIAN",
+    );
+    expect(ids(ex1.cancelled)).toEqual(["cancelled-next-week", "cancelled-last-week"]);
+
+    // Example 2: CONFIRMED tomorrow -> not in Cancelled.
+    const ex2 = partitionAppointments(
+      [appt("confirmed-tomorrow", NOW + DAY, "CONFIRMED")],
+      NOW,
+      "CLINICIAN",
+    );
+    expect(ids(ex2.cancelled)).toEqual([]);
+
+    // Enum boundary: CANCELLED before / equal / after now is in; every other status is out.
+    for (const role of ["PATIENT", "CLINICIAN"] as const) {
+      const { cancelled } = partitionAppointments(matrix(), NOW, role);
+      expect(ids(cancelled)).toEqual(["CANCELLED:after", "CANCELLED:equal", "CANCELLED:before"]);
+    }
+  });
+});
+
+describe("groupByDay", () => {
+  const LA = "America/Los_Angeles";
+  const JERUSALEM = "Asia/Jerusalem";
+
+  it("AC9.logic @agent-trusted groups by day in the clinic time zone with Today, Tomorrow and dated headings", () => {
+    // Now is 2026-10-06 10:00 in Los Angeles (PDT, UTC-7).
+    const now = Date.parse("2026-10-06T17:00:00Z");
+    const zoneOf = new Map<string, string>([
+      ["la-today-14", LA],
+      ["la-tomorrow-09", LA],
+      ["la-today-2330", LA],
+      ["la-thu", LA],
+      ["la-2027", LA],
+      ["il-same-instant", JERUSALEM],
+    ]);
+    const rows = [
+      // 2026-10-06 14:00 LA
+      appt("la-today-14", Date.parse("2026-10-06T21:00:00Z"), "CONFIRMED"),
+      // 2026-10-06 23:30 LA == 2026-10-07 06:30 UTC == 09:30 Israel
+      appt("la-today-2330", Date.parse("2026-10-07T06:30:00Z"), "CONFIRMED"),
+      // Same instant, but the clinic is in Israel -> its day is Oct 7 there.
+      appt("il-same-instant", Date.parse("2026-10-07T06:30:00Z"), "CONFIRMED"),
+      // 2026-10-07 09:00 LA
+      appt("la-tomorrow-09", Date.parse("2026-10-07T16:00:00Z"), "CONFIRMED"),
+      // 2026-10-08 12:00 LA
+      appt("la-thu", Date.parse("2026-10-08T19:00:00Z"), "CONFIRMED"),
+      // 2027-01-05 10:00 LA (PST, UTC-8)
+      appt("la-2027", Date.parse("2027-01-05T18:00:00Z"), "CONFIRMED"),
+    ];
+
+    const groups = groupByDay(rows, (a) => zoneOf.get(a.id), now);
+
+    expect(groups.map((g) => ({ label: g.label, ids: ids(g.rows) }))).toEqual([
+      { label: "Today · Tue, Oct 6", ids: ["la-today-14", "la-today-2330"] },
+      { label: "Tomorrow · Wed, Oct 7", ids: ["il-same-instant", "la-tomorrow-09"] },
+      { label: "Thu, Oct 8", ids: ["la-thu"] },
+      { label: "Tue, Jan 5, 2027", ids: ["la-2027"] },
+    ]);
+    // Day keys are the clinic-zone calendar date.
+    expect(groups.map((g) => g.key)).toEqual([
+      "2026-10-06",
+      "2026-10-07",
+      "2026-10-08",
+      "2027-01-05",
+    ]);
   });
 });

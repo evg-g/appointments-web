@@ -1,5 +1,7 @@
 import type { AppointmentOut, UserRole } from "@/api/types";
 
+import { dayKey, formatDayHeading } from "@/lib/datetime";
+
 import { isTerminal } from "./status";
 
 /** The appointment list tabs. Each row lands in exactly one of upcoming / past / cancelled. */
@@ -56,4 +58,37 @@ export function partitionAppointments(
   groups.past.sort(newestFirst);
   groups.cancelled.sort(newestFirst);
   return groups;
+}
+
+/** One day heading inside a tab and the rows on that day. */
+export interface DayGroup {
+  /** Calendar day `YYYY-MM-DD` in the appointment's clinic time zone. */
+  key: string;
+  /** Heading, e.g. "Today · Tue, Oct 6", "Thu, Oct 8" or "Tue, Jan 5, 2027". */
+  label: string;
+  rows: AppointmentOut[];
+}
+
+/**
+ * Group rows by calendar day in each appointment's clinic time zone (`timeZoneOf`; the runtime
+ * zone when it returns undefined, e.g. while the clinic is still loading). Groups keep the order
+ * in which their first row appears, and rows keep their input order, so a sorted tab stays sorted.
+ */
+export function groupByDay(
+  rows: readonly AppointmentOut[],
+  timeZoneOf: (a: AppointmentOut) => string | undefined,
+  now: number,
+): DayGroup[] {
+  const groups = new Map<string, DayGroup>();
+  for (const a of rows) {
+    const timeZone = timeZoneOf(a);
+    const key = dayKey(a.starts_at, timeZone);
+    const group = groups.get(key);
+    if (group !== undefined) {
+      group.rows.push(a);
+    } else {
+      groups.set(key, { key, label: formatDayHeading(a.starts_at, timeZone, now), rows: [a] });
+    }
+  }
+  return [...groups.values()];
 }
