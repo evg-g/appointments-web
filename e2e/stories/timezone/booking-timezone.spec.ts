@@ -49,6 +49,8 @@ test.describe("booking from another time zone", () => {
 
     await test.step("The appointments list shows the same time and zone", async () => {
       await appointmentPage.allAppointmentsLink.click();
+      // BOOKABLE_DAY is in the past, so the booking is listed under the Past tab (AURORA-8).
+      await appointmentsList.openTab("Past");
       await expect(appointmentsList.appointment("Jan 5, 2026, 12:20 PM PST")).toBeVisible();
     });
   });

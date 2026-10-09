@@ -28,6 +28,8 @@ export { Select } from "./Select";
 export type { SelectProps } from "./Select";
 export { Table, TBody, TD, TH, THead, TR } from "./Table";
 export type { CellProps } from "./Table";
+export { Tabs } from "./Tabs";
+export type { TabItem, TabsProps } from "./Tabs";
 export { Textarea } from "./Textarea";
 export type { TextareaProps } from "./Textarea";
 export { Skeleton, SkeletonText } from "./Skeleton";

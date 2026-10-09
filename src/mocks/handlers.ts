@@ -2,6 +2,7 @@ import { http, HttpResponse } from "msw";
 
 import type { components } from "@/api/schema";
 
+import { EVERY_STATUS_APPOINTMENTS } from "./appointmentsEveryStatus";
 import { problem, SEED_ACCOUNTS } from "./data";
 import type { TokenResponse, UserOut } from "./data";
 import {
@@ -675,6 +676,15 @@ export const scenarios = {
   appointmentsEmpty: () =>
     http.get("/api/v1/appointments", () =>
       HttpResponse.json({ data: [], page: { has_more: false, next_cursor: null } }),
+    ),
+
+  /** A fixed list with every status around EVERY_STATUS_NOW (the AURORA-8 tab specs). */
+  appointmentsEveryStatus: () =>
+    http.get("/api/v1/appointments", () =>
+      HttpResponse.json({
+        data: EVERY_STATUS_APPOINTMENTS,
+        page: { has_more: false, next_cursor: null },
+      }),
     ),
 
   appointmentsError: () =>

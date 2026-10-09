@@ -1,6 +1,12 @@
 import { expect, type Page, type Route } from "@playwright/test";
 
 import { AppointmentPage, BookingWizardPage, DashboardPage, LoginPage } from "../models";
+import {
+  EVERY_STATUS_APPOINTMENTS,
+  EVERY_STATUS_NOW,
+} from "../../src/mocks/appointmentsEveryStatus";
+
+export { EVERY_STATUS_NOW };
 
 /**
  * Shared helpers for the browser test tiers.
@@ -41,6 +47,7 @@ export type ScenarioName =
   | "bookingConflict"
   | "appointmentsError"
   | "appointmentsEmpty"
+  | "appointmentsEveryStatus"
   | "clinicsError"
   | "devicesError"
   | "acknowledgeFails";
@@ -149,6 +156,20 @@ async function routeScenario(page: Page, name: ScenarioName): Promise<void> {
       await page.route("**/api/v1/appointments**", async (route) => {
         if (route.request().method() === "GET" && pathOf(route) === "/api/v1/appointments") {
           await route.fulfill({ status: 200, contentType: "application/json", body: emptyPage });
+        } else await route.fallback();
+      });
+      break;
+    case "appointmentsEveryStatus":
+      await page.route("**/api/v1/appointments**", async (route) => {
+        if (route.request().method() === "GET" && pathOf(route) === "/api/v1/appointments") {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              data: EVERY_STATUS_APPOINTMENTS,
+              page: { has_more: false, next_cursor: null },
+            }),
+          });
         } else await route.fallback();
       });
       break;
