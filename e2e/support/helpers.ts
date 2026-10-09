@@ -4,9 +4,12 @@ import { AppointmentPage, BookingWizardPage, DashboardPage, LoginPage } from "..
 import {
   EVERY_STATUS_APPOINTMENTS,
   EVERY_STATUS_NOW,
+  NO_CANCELLED_APPOINTMENTS,
+  OCTOBER_NOW,
+  ONLY_CANCELLED_APPOINTMENTS,
 } from "../../src/mocks/appointmentsEveryStatus";
 
-export { EVERY_STATUS_NOW };
+export { EVERY_STATUS_NOW, OCTOBER_NOW };
 
 /**
  * Shared helpers for the browser test tiers.
@@ -48,6 +51,8 @@ export type ScenarioName =
   | "appointmentsError"
   | "appointmentsEmpty"
   | "appointmentsEveryStatus"
+  | "appointmentsNoCancelled"
+  | "appointmentsOnlyCancelled"
   | "clinicsError"
   | "devicesError"
   | "acknowledgeFails";
@@ -130,6 +135,20 @@ async function fulfillProblem(
   });
 }
 
+/** Composed mode: serve `rows` as the whole appointments list (GET /api/v1/appointments only). */
+async function routeAppointmentList(page: Page, rows: readonly unknown[]): Promise<void> {
+  await page.route("**/api/v1/appointments**", async (route) => {
+    const { pathname } = new URL(route.request().url());
+    if (route.request().method() === "GET" && pathname === "/api/v1/appointments") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ data: rows, page: { has_more: false, next_cursor: null } }),
+      });
+    } else await route.fallback();
+  });
+}
+
 /**
  * Composed mode: force a named error scenario at the network layer with page.route(), the real-stack
  * equivalent of the MSW `scenarios` map. Each route matches only its own endpoint and falls back for
@@ -160,18 +179,13 @@ async function routeScenario(page: Page, name: ScenarioName): Promise<void> {
       });
       break;
     case "appointmentsEveryStatus":
-      await page.route("**/api/v1/appointments**", async (route) => {
-        if (route.request().method() === "GET" && pathOf(route) === "/api/v1/appointments") {
-          await route.fulfill({
-            status: 200,
-            contentType: "application/json",
-            body: JSON.stringify({
-              data: EVERY_STATUS_APPOINTMENTS,
-              page: { has_more: false, next_cursor: null },
-            }),
-          });
-        } else await route.fallback();
-      });
+      await routeAppointmentList(page, EVERY_STATUS_APPOINTMENTS);
+      break;
+    case "appointmentsNoCancelled":
+      await routeAppointmentList(page, NO_CANCELLED_APPOINTMENTS);
+      break;
+    case "appointmentsOnlyCancelled":
+      await routeAppointmentList(page, ONLY_CANCELLED_APPOINTMENTS);
       break;
     case "clinicsError":
       await page.route("**/api/v1/clinics**", async (route) => {

@@ -49,9 +49,74 @@ export class AppointmentsListPage {
     await expect(this.tab(name)).toHaveAttribute("aria-selected", "true");
   }
 
-  /** The link that opens an appointment, by its shown date and time, e.g. "Jan 5, 2026, 12:20 PM PST". */
-  appointment(when: string): Locator {
-    return this.page.getByRole("link", { name: when });
+  /** The count in a tab label, e.g. 12 for "Upcoming (12)"; null when the label has no count. */
+  async tabCount(name: AppointmentsTab): Promise<number | null> {
+    const text = (await this.tab(name).innerText()).trim();
+    const match = /\((\d+)\)$/.exec(text);
+    return match?.[1] !== undefined ? Number(match[1]) : null;
+  }
+
+  /** The appointment rows of the open tab (rows with a link; header rows have none). */
+  get rows(): Locator {
+    return this.panel.getByRole("row").filter({ has: this.page.getByRole("link") });
+  }
+
+  /** The link of a row: the start time with the clinic's zone, e.g. "10:00 AM PDT". */
+  rowLink(row: Locator): Locator {
+    return row.getByRole("link");
+  }
+
+  /** The cells of a row: time link, clinic, status. */
+  rowCells(row: Locator): Locator {
+    return row.getByRole("cell");
+  }
+
+  /** A day group in the open tab, by its heading, e.g. "Mon, Oct 12" or "Today · Fri, Oct 9". */
+  dayGroup(label: string | RegExp): Locator {
+    return this.panel.getByRole(
+      "group",
+      typeof label === "string" ? { name: label, exact: true } : { name: label },
+    );
+  }
+
+  /** The row in `group` whose link reads `time`, e.g. "10:00 AM PDT". */
+  rowAt(group: Locator, time: string): Locator {
+    return group
+      .getByRole("row")
+      .filter({ has: this.page.getByRole("link", { name: time, exact: true }) });
+  }
+
+  /** The headings of the day groups in the open tab, in order. */
+  get dayHeadings(): Locator {
+    return this.panel.getByRole("heading", { level: 2 });
+  }
+
+  /**
+   * The link of the appointment at `time` (as shown, with zone, e.g. "12:20 PM PST") under the day
+   * group of `day` (YYYY-MM-DD, in the clinic's zone). The heading may carry "Today · " /
+   * "Tomorrow · " and the year, depending on the viewer's clock.
+   */
+  appointmentOn(day: string, time: string): Locator {
+    const date = new Date(`${day}T12:00:00Z`);
+    const text = new Intl.DateTimeFormat("en-US", {
+      timeZone: "UTC",
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    }).format(date);
+    const year = String(date.getUTCFullYear());
+    const heading = new RegExp(`^((Today|Tomorrow) · )?${text}(, ${year})?$`);
+    return this.dayGroup(heading).getByRole("link", { name: time, exact: true });
+  }
+
+  /** The empty message of the open tab, e.g. "No cancelled appointments". */
+  tabEmptyState(message: string): Locator {
+    return this.panel.getByText(message, { exact: true });
+  }
+
+  /** The Book appointment action inside the open tab's panel. */
+  get panelBookLink(): Locator {
+    return this.panel.getByRole("link", { name: "Book appointment" });
   }
 
   async startBooking(): Promise<void> {

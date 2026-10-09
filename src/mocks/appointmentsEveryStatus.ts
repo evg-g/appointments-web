@@ -44,3 +44,30 @@ export const EVERY_STATUS_APPOINTMENTS: AppointmentOut[] = [
   row(5, "2025-12-30T17:00:00Z", "NO_SHOW"), // Past
   row(6, "2026-01-08T17:00:00Z", "CANCELLED", "Rescheduled by the patient"), // Cancelled
 ];
+
+/**
+ * "Now" for the two lists below: Friday 2026-10-09 at 10:00 in Los Angeles (PDT). The clinic is on
+ * PDT until 2026-11-01 and on PST after it, so these lists have rows on both.
+ */
+export const OCTOBER_NOW = "2026-10-09T17:00:00Z";
+
+/**
+ * Rows in Upcoming, Needs action and Past, but none cancelled (an empty Cancelled tab), on PDT and
+ * PST dates. Served by the `appointmentsNoCancelled` scenario; fix the clock to `OCTOBER_NOW`.
+ */
+export const NO_CANCELLED_APPOINTMENTS: AppointmentOut[] = [
+  row(11, "2026-10-12T17:00:00Z", "CONFIRMED"), // Upcoming: Mon, Oct 12, 10:00 AM PDT
+  row(12, "2026-11-03T17:30:00Z", "REQUESTED"), // Upcoming + Needs action: Tue, Nov 3, 09:30 AM PST
+  row(13, "2026-10-08T16:00:00Z", "CONFIRMED"), // Past + Needs action: Thu, Oct 8, 09:00 AM PDT
+  row(14, "2026-10-07T17:00:00Z", "COMPLETED"), // Past: Wed, Oct 7, 10:00 AM PDT
+  row(15, "2026-01-15T18:00:00Z", "NO_SHOW"), // Past: Thu, Jan 15, 10:00 AM PST
+];
+
+/**
+ * Only cancelled rows: Upcoming, Needs action and Past are empty while Cancelled is not. Served by
+ * the `appointmentsOnlyCancelled` scenario; fix the clock to `OCTOBER_NOW`.
+ */
+export const ONLY_CANCELLED_APPOINTMENTS: AppointmentOut[] = [
+  row(21, "2026-10-13T17:00:00Z", "CANCELLED", "Patient is travelling"),
+  row(22, "2026-01-20T18:00:00Z", "CANCELLED", "Clinic closed"),
+];
