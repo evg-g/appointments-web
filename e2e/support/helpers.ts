@@ -1,6 +1,17 @@
 import { expect, type Page, type Route } from "@playwright/test";
 
 import { AppointmentPage, BookingWizardPage, DashboardPage, LoginPage } from "../models";
+import {
+  EVERY_STATUS_APPOINTMENTS,
+  EVERY_STATUS_NOW,
+  MANY_PAGES_APPOINTMENTS,
+  NO_CANCELLED_APPOINTMENTS,
+  OCTOBER_NOW,
+  ONLY_CANCELLED_APPOINTMENTS,
+  TWO_CLINICS_APPOINTMENTS,
+} from "../../src/mocks/appointmentsEveryStatus";
+
+export { EVERY_STATUS_NOW, OCTOBER_NOW };
 
 /**
  * Shared helpers for the browser test tiers.
@@ -41,6 +52,11 @@ export type ScenarioName =
   | "bookingConflict"
   | "appointmentsError"
   | "appointmentsEmpty"
+  | "appointmentsEveryStatus"
+  | "appointmentsNoCancelled"
+  | "appointmentsOnlyCancelled"
+  | "appointmentsTwoClinics"
+  | "appointmentsManyPages"
   | "clinicsError"
   | "devicesError"
   | "acknowledgeFails";
@@ -124,6 +140,30 @@ async function fulfillProblem(
 }
 
 /**
+ * Composed mode: serve `rows` as the appointments list (GET /api/v1/appointments only), paged by
+ * the request's `limit` and `cursor` (an offset) like the MSW backend.
+ */
+async function routeAppointmentList(page: Page, rows: readonly unknown[]): Promise<void> {
+  await page.route("**/api/v1/appointments**", async (route) => {
+    const url = new URL(route.request().url());
+    if (route.request().method() === "GET" && url.pathname === "/api/v1/appointments") {
+      const limit = Number(url.searchParams.get("limit") ?? "50");
+      const offset = Number(url.searchParams.get("cursor") ?? "0");
+      const next = offset + limit;
+      const hasMore = next < rows.length;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: rows.slice(offset, next),
+          page: { has_more: hasMore, next_cursor: hasMore ? String(next) : null },
+        }),
+      });
+    } else await route.fallback();
+  });
+}
+
+/**
  * Composed mode: force a named error scenario at the network layer with page.route(), the real-stack
  * equivalent of the MSW `scenarios` map. Each route matches only its own endpoint and falls back for
  * everything else, so auth/me hydration and unrelated calls still hit the real API.
@@ -151,6 +191,21 @@ async function routeScenario(page: Page, name: ScenarioName): Promise<void> {
           await route.fulfill({ status: 200, contentType: "application/json", body: emptyPage });
         } else await route.fallback();
       });
+      break;
+    case "appointmentsEveryStatus":
+      await routeAppointmentList(page, EVERY_STATUS_APPOINTMENTS);
+      break;
+    case "appointmentsNoCancelled":
+      await routeAppointmentList(page, NO_CANCELLED_APPOINTMENTS);
+      break;
+    case "appointmentsOnlyCancelled":
+      await routeAppointmentList(page, ONLY_CANCELLED_APPOINTMENTS);
+      break;
+    case "appointmentsTwoClinics":
+      await routeAppointmentList(page, TWO_CLINICS_APPOINTMENTS);
+      break;
+    case "appointmentsManyPages":
+      await routeAppointmentList(page, MANY_PAGES_APPOINTMENTS);
       break;
     case "clinicsError":
       await page.route("**/api/v1/clinics**", async (route) => {

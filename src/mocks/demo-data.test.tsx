@@ -1,8 +1,25 @@
 import { screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import { db, seedDemoData } from "@/mocks/db";
 import { loginAs, renderApp } from "@/test/utils";
+
+/**
+ * Rows shown on /appointments across every tab. Upcoming, Past and Cancelled split the list with no
+ * overlap (Needs action, staff only, repeats rows from Upcoming and Past, so it is not counted).
+ * Each row has one link to its appointment.
+ */
+async function rowsAcrossTabs(): Promise<number> {
+  await screen.findByRole("tablist", { name: "Appointments" });
+  let total = 0;
+  for (const name of [/^Upcoming/, /^Past/, /^Cancelled/]) {
+    await userEvent.click(screen.getByRole("tab", { name }));
+    const panel = screen.getByRole("tabpanel");
+    total += within(panel).queryAllByRole("link", { name: /^\d{2}:\d{2} [AP]M/ }).length;
+  }
+  return total;
+}
 
 // The opt-in demo dataset (VITE_MSW_DEMO_DATA) must stay believable: the mock scopes the list the
 // way the real API does, so the extra patients' bookings never leak into the patient's own view.
@@ -16,9 +33,7 @@ describe("demo dataset", () => {
 
     await loginAs("patient@aurora.test");
     renderApp("/appointments");
-    const table = await screen.findByRole("table");
-    const bodyRows = (await within(table).findAllByRole("row")).slice(1);
-    expect(bodyRows).toHaveLength(own);
+    expect(await rowsAcrossTabs()).toBe(own);
   });
 
   it("shows a clinician only their clinic's bookings", async () => {
@@ -29,8 +44,6 @@ describe("demo dataset", () => {
 
     await loginAs("clinician@aurora.test");
     renderApp("/appointments");
-    const table = await screen.findByRole("table");
-    const bodyRows = (await within(table).findAllByRole("row")).slice(1);
-    expect(bodyRows).toHaveLength(downtown);
+    expect(await rowsAcrossTabs()).toBe(downtown);
   });
 });
