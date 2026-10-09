@@ -4,8 +4,10 @@ import type { components } from "@/api/schema";
 
 import {
   EVERY_STATUS_APPOINTMENTS,
+  MANY_PAGES_APPOINTMENTS,
   NO_CANCELLED_APPOINTMENTS,
   ONLY_CANCELLED_APPOINTMENTS,
+  TWO_CLINICS_APPOINTMENTS,
 } from "./appointmentsEveryStatus";
 import { problem, SEED_ACCOUNTS } from "./data";
 import type { TokenResponse, UserOut } from "./data";
@@ -707,6 +709,21 @@ export const scenarios = {
         data: ONLY_CANCELLED_APPOINTMENTS,
         page: { has_more: false, next_cursor: null },
       }),
+    ),
+
+  /** Rows at both seeded clinics in every tab, around OCTOBER_NOW (the AURORA-8 clinic filter). */
+  appointmentsTwoClinics: () =>
+    http.get("/api/v1/appointments", () =>
+      HttpResponse.json({
+        data: TWO_CLINICS_APPOINTMENTS,
+        page: { has_more: false, next_cursor: null },
+      }),
+    ),
+
+  /** 150 rows paged by limit/cursor, more than one page of 100, around OCTOBER_NOW (AURORA-8). */
+  appointmentsManyPages: () =>
+    http.get("/api/v1/appointments", ({ request }) =>
+      HttpResponse.json(paginate(MANY_PAGES_APPOINTMENTS, new URL(request.url))),
     ),
 
   appointmentsError: () =>

@@ -4,9 +4,11 @@ import { AppointmentPage, BookingWizardPage, DashboardPage, LoginPage } from "..
 import {
   EVERY_STATUS_APPOINTMENTS,
   EVERY_STATUS_NOW,
+  MANY_PAGES_APPOINTMENTS,
   NO_CANCELLED_APPOINTMENTS,
   OCTOBER_NOW,
   ONLY_CANCELLED_APPOINTMENTS,
+  TWO_CLINICS_APPOINTMENTS,
 } from "../../src/mocks/appointmentsEveryStatus";
 
 export { EVERY_STATUS_NOW, OCTOBER_NOW };
@@ -53,6 +55,8 @@ export type ScenarioName =
   | "appointmentsEveryStatus"
   | "appointmentsNoCancelled"
   | "appointmentsOnlyCancelled"
+  | "appointmentsTwoClinics"
+  | "appointmentsManyPages"
   | "clinicsError"
   | "devicesError"
   | "acknowledgeFails";
@@ -135,15 +139,25 @@ async function fulfillProblem(
   });
 }
 
-/** Composed mode: serve `rows` as the whole appointments list (GET /api/v1/appointments only). */
+/**
+ * Composed mode: serve `rows` as the appointments list (GET /api/v1/appointments only), paged by
+ * the request's `limit` and `cursor` (an offset) like the MSW backend.
+ */
 async function routeAppointmentList(page: Page, rows: readonly unknown[]): Promise<void> {
   await page.route("**/api/v1/appointments**", async (route) => {
-    const { pathname } = new URL(route.request().url());
-    if (route.request().method() === "GET" && pathname === "/api/v1/appointments") {
+    const url = new URL(route.request().url());
+    if (route.request().method() === "GET" && url.pathname === "/api/v1/appointments") {
+      const limit = Number(url.searchParams.get("limit") ?? "50");
+      const offset = Number(url.searchParams.get("cursor") ?? "0");
+      const next = offset + limit;
+      const hasMore = next < rows.length;
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({ data: rows, page: { has_more: false, next_cursor: null } }),
+        body: JSON.stringify({
+          data: rows.slice(offset, next),
+          page: { has_more: hasMore, next_cursor: hasMore ? String(next) : null },
+        }),
       });
     } else await route.fallback();
   });
@@ -186,6 +200,12 @@ async function routeScenario(page: Page, name: ScenarioName): Promise<void> {
       break;
     case "appointmentsOnlyCancelled":
       await routeAppointmentList(page, ONLY_CANCELLED_APPOINTMENTS);
+      break;
+    case "appointmentsTwoClinics":
+      await routeAppointmentList(page, TWO_CLINICS_APPOINTMENTS);
+      break;
+    case "appointmentsManyPages":
+      await routeAppointmentList(page, MANY_PAGES_APPOINTMENTS);
       break;
     case "clinicsError":
       await page.route("**/api/v1/clinics**", async (route) => {

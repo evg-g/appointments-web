@@ -15,6 +15,10 @@ export class AppointmentsListPage {
   readonly bookLink: Locator;
   readonly retryButton: Locator;
   readonly emptyState: Locator;
+  /** The "Clinic" select: "All clinics" and each clinic. */
+  readonly clinicFilter: Locator;
+  /** The button under the tabs that loads the next page of appointments. */
+  readonly loadMoreButton: Locator;
 
   constructor(private readonly page: Page) {
     this.heading = page.getByRole("heading", { level: 1, name: "Appointments" });
@@ -24,6 +28,26 @@ export class AppointmentsListPage {
     this.tablist = page.getByRole("tablist", { name: "Appointments" });
     this.tabs = this.tablist.getByRole("tab");
     this.panel = page.getByRole("tabpanel");
+    this.clinicFilter = page.getByRole("combobox", { name: "Clinic" });
+    this.loadMoreButton = page.getByRole("button", { name: "Load more" });
+  }
+
+  /** Choose a clinic by its name ("All clinics" or e.g. "Aurora Downtown") in the clinic filter. */
+  async filterByClinic(name: string): Promise<void> {
+    await this.clinicFilter.selectOption({ label: name });
+  }
+
+  /** The name of the option chosen in the clinic filter, e.g. "All clinics". */
+  async chosenClinic(): Promise<string> {
+    return (await this.clinicFilter.locator("option:checked").innerText()).trim();
+  }
+
+  /** The value (clinic id) of the clinic filter option named `name`. */
+  async clinicOptionValue(name: string): Promise<string> {
+    const value = await this.clinicFilter
+      .getByRole("option", { name, exact: true })
+      .getAttribute("value");
+    return value ?? "";
   }
 
   /** Open the list, optionally with a query string such as "?tab=past". */

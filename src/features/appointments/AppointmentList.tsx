@@ -11,7 +11,9 @@ import {
   Badge,
   Button,
   EmptyState,
+  Field,
   QueryBoundary,
+  Select,
   Table,
   TBody,
   TD,
@@ -77,6 +79,9 @@ function tabsFor(role: UserRole, groups: AppointmentGroups): TabItem<ListTab>[] 
   );
 }
 
+/** The page size of the list: the API's maximum. */
+const PAGE_LIMIT = 100;
+
 /** The open tab from `?tab=`; Upcoming when it is missing, unknown or not allowed for the role. */
 function selectedTab(param: string | null, items: readonly TabItem<ListTab>[]): ListTab {
   return items.find((item) => item.value === param)?.value ?? "upcoming";
@@ -98,18 +103,42 @@ export function AppointmentList() {
       { replace: true },
     );
   };
-  const query = useAppointments();
+  /** Keep the chosen clinic in `?clinic=`; "All clinics" (empty) removes it. Other params stay. */
+  const chooseClinic = (clinicId: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (clinicId === "") next.delete("clinic");
+        else next.set("clinic", clinicId);
+        return next;
+      },
+      { replace: true },
+    );
+  };
+  const query = useAppointments({ limit: PAGE_LIMIT });
   const clinicsQuery = useClinics();
+  const clinics = useMemo(() => flattenClinics(clinicsQuery.data), [clinicsQuery.data]);
   const clinicNames = useMemo(() => {
     const map = new Map<string, string>();
-    for (const clinic of flattenClinics(clinicsQuery.data)) map.set(clinic.id, clinic.name);
+    for (const clinic of clinics) map.set(clinic.id, clinic.name);
     return map;
-  }, [clinicsQuery.data]);
+  }, [clinics]);
   const clinicTimeZones = useClinicTimeZones();
+
+  // The clinic filter from `?clinic=`. An id that is not a known clinic (once the clinics have
+  // loaded) means All clinics, so a stale link does not hide every row.
+  const clinicParam = searchParams.get("clinic") ?? "";
+  const clinicId =
+    clinicParam !== "" && (clinicsQuery.isPending || clinicNames.has(clinicParam))
+      ? clinicParam
+      : "";
 
   const appointments = flattenAppointments(query.data);
   const now = Date.now();
-  const groups = partitionAppointments(appointments, now, role);
+  // Filter before partitioning, so the tab counts follow the clinic filter.
+  const shown =
+    clinicId === "" ? appointments : appointments.filter((a) => a.clinic_id === clinicId);
+  const groups = partitionAppointments(shown, now, role);
   const tabItems = tabsFor(role, groups);
   const tab = selectedTab(searchParams.get("tab"), tabItems);
   const current = TABS.find((t) => t.value === tab) ?? UPCOMING;
@@ -155,6 +184,17 @@ export function AppointmentList() {
       >
         {() => (
           <div className="flex flex-col gap-4">
+            <Field label="Clinic" className="max-w-xs">
+              <Select value={clinicId} onChange={(event) => chooseClinic(event.target.value)}>
+                <option value="">All clinics</option>
+                {clinics.map((clinic) => (
+                  <option key={clinic.id} value={clinic.id}>
+                    {clinic.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
             <Tabs label="Appointments" items={tabItems} value={tab} onValueChange={openTab}>
               {groups[current.group].length === 0 ? (
                 <EmptyState
