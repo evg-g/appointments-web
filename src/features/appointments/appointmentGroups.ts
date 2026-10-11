@@ -62,7 +62,10 @@ export function partitionAppointments(
 
 /** One day heading inside a tab and the rows on that day. */
 export interface DayGroup {
-  /** Calendar day `YYYY-MM-DD` in the appointment's clinic time zone. */
+  /**
+   * Calendar day `YYYY-MM-DD` in the appointment's clinic time zone. Not unique: two groups share
+   * it when the same date has a different heading in different clinic zones.
+   */
   key: string;
   /** Heading, e.g. "Today · Tue, Oct 6", "Thu, Oct 8" or "Tue, Jan 5, 2027". */
   label: string;
@@ -71,8 +74,12 @@ export interface DayGroup {
 
 /**
  * Group rows by calendar day in each appointment's clinic time zone (`timeZoneOf`; the runtime
- * zone when it returns undefined, e.g. while the clinic is still loading). Groups keep the order
- * in which their first row appears, and rows keep their input order, so a sorted tab stays sorted.
+ * zone when it returns undefined, e.g. while the clinic is still loading). The heading is computed
+ * per row in its own clinic zone, and rows share a group only when both the date and the heading
+ * match: under All clinics, the same date can be Today in one clinic zone and Tomorrow in another,
+ * and each row must show the heading that is right for its clinic. So two groups can share a
+ * `key`. Groups keep the order in which their first row appears, and rows keep their input order,
+ * so a sorted tab stays sorted.
  */
 export function groupByDay(
   rows: readonly AppointmentOut[],
@@ -83,11 +90,13 @@ export function groupByDay(
   for (const a of rows) {
     const timeZone = timeZoneOf(a);
     const key = dayKey(a.starts_at, timeZone);
-    const group = groups.get(key);
+    const label = formatDayHeading(a.starts_at, timeZone, now);
+    const groupId = `${key}|${label}`;
+    const group = groups.get(groupId);
     if (group !== undefined) {
       group.rows.push(a);
     } else {
-      groups.set(key, { key, label: formatDayHeading(a.starts_at, timeZone, now), rows: [a] });
+      groups.set(groupId, { key, label, rows: [a] });
     }
   }
   return [...groups.values()];

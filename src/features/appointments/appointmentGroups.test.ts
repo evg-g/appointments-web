@@ -283,5 +283,25 @@ describe("groupByDay", () => {
       { label: "Tomorrow · Wed, Oct 7", ids: ["la-tomorrow-09"] },
       { label: "Thu, Oct 8", ids: ["la-thu"] },
     ]);
+
+    // All clinics: rows from clinics in different zones on the same date each get the heading
+    // that is right in their own clinic zone, never a heading shared with another zone.
+    // Now is Tue Oct 6 20:00 in Los Angeles and Wed Oct 7 06:00 in Israel.
+    const mixedNow = Date.parse("2026-10-07T03:00:00Z");
+    const mixedZoneOf = new Map<string, string>([
+      ["la-wed-10", LA],
+      ["il-wed-21", JERUSALEM],
+    ]);
+    const mixedRows = [
+      // 2026-10-07 10:00 LA: Tomorrow for the LA clinic.
+      appt("la-wed-10", Date.parse("2026-10-07T17:00:00Z"), "CONFIRMED"),
+      // 2026-10-07 21:00 Israel: Today for the Israel clinic.
+      appt("il-wed-21", Date.parse("2026-10-07T18:00:00Z"), "CONFIRMED"),
+    ];
+    const mixedGroups = groupByDay(mixedRows, (a) => mixedZoneOf.get(a.id), mixedNow);
+    expect(mixedGroups.map((g) => ({ label: g.label, ids: ids(g.rows) }))).toEqual([
+      { label: "Tomorrow · Wed, Oct 7", ids: ["la-wed-10"] },
+      { label: "Today · Wed, Oct 7", ids: ["il-wed-21"] },
+    ]);
   });
 });

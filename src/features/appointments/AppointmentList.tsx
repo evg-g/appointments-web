@@ -208,7 +208,7 @@ export function AppointmentList() {
                 <div className="flex flex-col gap-6">
                   {groupByDay(groups[current.group], timeZoneOf, now).map((day) => (
                     <DaySection
-                      key={day.key}
+                      key={`${day.key}|${day.label}`}
                       day={day}
                       clinicNames={clinicNames}
                       timeZoneOf={timeZoneOf}
