@@ -1,5 +1,5 @@
 import { CalendarPlus } from "lucide-react";
-import { useId } from "react";
+import { useEffect, useId } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { flattenAppointments, useAppointments } from "@/api/hooks";
@@ -127,6 +127,25 @@ export function AppointmentList() {
     clinicParam !== "" && (clinicDirectory.isPending || clinicNames.has(clinicParam))
       ? clinicParam
       : "";
+  // Once the clinics have loaded, drop an unknown `?clinic=` from the URL, so it matches the filter
+  // (All clinics) and a shared or reloaded link does not carry the stale id. Kept while the clinics
+  // load or fail, since it cannot be judged then.
+  const staleClinicParam =
+    clinicParam !== "" &&
+    !clinicDirectory.isPending &&
+    !clinicDirectory.isError &&
+    !clinicNames.has(clinicParam);
+  useEffect(() => {
+    if (!staleClinicParam) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("clinic");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [staleClinicParam, setSearchParams]);
 
   const appointments = flattenAppointments(query.data);
   const now = Date.now();

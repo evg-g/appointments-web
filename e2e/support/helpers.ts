@@ -6,6 +6,7 @@ import {
   EVERY_STATUS_NOW,
   MANY_CLINICS,
   MANY_PAGES_APPOINTMENTS,
+  MANY_PAGES_TWO_CLINICS_APPOINTMENTS,
   NO_CANCELLED_APPOINTMENTS,
   OCTOBER_NOW,
   ONLY_CANCELLED_APPOINTMENTS,
@@ -61,6 +62,7 @@ export type ScenarioName =
   | "appointmentsTwoClinics"
   | "appointmentsUnequalTabs"
   | "appointmentsManyPages"
+  | "appointmentsManyPagesTwoClinics"
   | "clinicsError"
   | "clinicsManyPages"
   | "devicesError"
@@ -219,6 +221,9 @@ async function routeScenario(page: Page, name: ScenarioName): Promise<void> {
       break;
     case "appointmentsManyPages":
       await routeAppointmentList(page, MANY_PAGES_APPOINTMENTS);
+      break;
+    case "appointmentsManyPagesTwoClinics":
+      await routeAppointmentList(page, MANY_PAGES_TWO_CLINICS_APPOINTMENTS);
       break;
     case "clinicsError":
       await page.route("**/api/v1/clinics**", async (route) => {

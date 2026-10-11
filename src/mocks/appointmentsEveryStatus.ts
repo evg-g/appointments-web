@@ -133,6 +133,27 @@ export const MANY_PAGES_APPOINTMENTS: AppointmentOut[] = Array.from({ length: 15
 });
 
 /**
+ * 150 rows at both seeded clinics, more than one page of 100, around `OCTOBER_NOW`, for Load more
+ * with the clinic filter. Same dates and statuses as `MANY_PAGES_APPOINTMENTS` (row `i` starts on
+ * 2026-10-20 at 18:00 UTC minus `i` days), ids from ...000300; row `i` is at Aurora Riverside when
+ * `i % 3 === 2`, else at Aurora Downtown, so both clinics have rows in every tab on both pages.
+ * Served newest first and paged by `limit`/`cursor` by the `appointmentsManyPagesTwoClinics`
+ * scenario. Staff counts (Upcoming, Needs action, Past, Cancelled):
+ *   first page (100 rows): all 12/28/66/22, Downtown (67) 8/19/45/14, Riverside (33) 4/9/21/8
+ *   all rows (150):        all 12/40/104/34, Downtown (100) 8/27/70/22, Riverside (50) 4/13/34/12
+ */
+export const MANY_PAGES_TWO_CLINICS_APPOINTMENTS: AppointmentOut[] = MANY_PAGES_APPOINTMENTS.map(
+  (appointment, i) =>
+    row(
+      300 + i,
+      appointment.starts_at,
+      appointment.status,
+      appointment.cancellation_reason,
+      i % 3 === 2 ? RIVERSIDE : CLINIC,
+    ),
+);
+
+/**
  * 60 clinics, more than one page of 50, for the clinic filter. Aurora Downtown is first and Aurora
  * Riverside is 55th (on the second page); the rest are "Aurora Satellite NN". Served paged by
  * `limit`/`cursor` by the `clinicsManyPages` scenario; pair it with `appointmentsTwoClinics`.

@@ -6,6 +6,7 @@ import {
   EVERY_STATUS_APPOINTMENTS,
   MANY_CLINICS,
   MANY_PAGES_APPOINTMENTS,
+  MANY_PAGES_TWO_CLINICS_APPOINTMENTS,
   NO_CANCELLED_APPOINTMENTS,
   ONLY_CANCELLED_APPOINTMENTS,
   TWO_CLINICS_APPOINTMENTS,
@@ -735,6 +736,15 @@ export const scenarios = {
   appointmentsManyPages: () =>
     http.get("/api/v1/appointments", ({ request }) =>
       HttpResponse.json(paginate(MANY_PAGES_APPOINTMENTS, new URL(request.url))),
+    ),
+
+  /**
+   * 150 rows at both seeded clinics paged by limit/cursor, more than one page of 100, around
+   * OCTOBER_NOW: both clinics have rows on page 2 (AURORA-8, Load more with the clinic filter).
+   */
+  appointmentsManyPagesTwoClinics: () =>
+    http.get("/api/v1/appointments", ({ request }) =>
+      HttpResponse.json(paginate(MANY_PAGES_TWO_CLINICS_APPOINTMENTS, new URL(request.url))),
     ),
 
   appointmentsError: () =>

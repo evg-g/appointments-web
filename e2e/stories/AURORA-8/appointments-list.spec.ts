@@ -89,6 +89,14 @@ const CASES: Case[] = [
   },
 ];
 
+/** The empty message of each tab. */
+const MESSAGES: Record<AppointmentsTab, string> = {
+  Upcoming: "No upcoming appointments",
+  "Needs action": "Nothing needs action",
+  Past: "No past appointments",
+  Cancelled: "No cancelled appointments",
+};
+
 test.describe("AURORA-8 appointments list content", () => {
   test("AC7.ui @agent-trusted each tab label shows its count and the count equals the rows in that tab", async ({
     page,
@@ -118,13 +126,6 @@ test.describe("AURORA-8 appointments list content", () => {
     page,
     appointmentsList,
   }) => {
-    const MESSAGES: Record<AppointmentsTab, string> = {
-      Upcoming: "No upcoming appointments",
-      "Needs action": "Nothing needs action",
-      Past: "No past appointments",
-      Cancelled: "No cancelled appointments",
-    };
-
     /** The open tab shows its empty message and a Book appointment action, and no rows. */
     const expectEmptyTab = async (list: AppointmentsListPage, tab: AppointmentsTab) => {
       await list.openTab(tab);
@@ -174,6 +175,67 @@ test.describe("AURORA-8 appointments list content", () => {
       for (const message of Object.values(MESSAGES)) {
         await expect(appointmentsList.textOnPage(message)).toHaveCount(0);
       }
+    });
+  });
+
+  test("AC8.ui @agent-trusted a clinic with no appointments in the filter shows every tab at (0) with its own message, not No appointments yet", async ({
+    page,
+    appointmentsList,
+  }) => {
+    const list = appointmentsList;
+    const TABS: AppointmentsTab[] = ["Upcoming", "Needs action", "Past", "Cancelled"];
+    // appointmentsNoCancelled: every row is at Aurora Downtown, none at Aurora Riverside.
+    await page.clock.setFixedTime(new Date(OCTOBER_NOW));
+    await bootScenario(page, "appointmentsNoCancelled");
+    await seedSession(page, "CLINICIAN");
+    await list.goto();
+    await expect(list.rows.first()).toBeVisible();
+
+    await test.step("Choose Aurora Riverside: the filter and the tabs stay, every tab at (0)", async () => {
+      await list.filterByClinic("Aurora Riverside");
+      await expect(list.clinicFilter).toBeVisible();
+      await expect.poll(() => list.chosenClinic()).toBe("Aurora Riverside");
+      await expect(list.tabs).toHaveCount(TABS.length);
+      for (const [index, tab] of TABS.entries()) {
+        await expect(list.tabs.nth(index)).toHaveText(`${tab} (0)`);
+      }
+      await expect(list.emptyState).toHaveCount(0);
+    });
+
+    await test.step("Each tab shows its own empty message with Book appointment, not No appointments yet", async () => {
+      for (const tab of TABS) {
+        await list.openTab(tab);
+        await expect(list.tabEmptyState(MESSAGES[tab])).toBeVisible();
+        await expect(list.panelBookLink).toHaveAttribute("href", "/appointments/new");
+        await expect(list.rows).toHaveCount(0);
+        await expect(list.emptyState).toHaveCount(0);
+        await expect(list.clinicFilter).toBeVisible();
+      }
+    });
+  });
+
+  test("AC10.ui @agent-trusted row times keep the leading zero of the hour as elsewhere in the app", async ({
+    page,
+    appointmentsList,
+  }) => {
+    const list = appointmentsList;
+    await page.clock.setFixedTime(new Date(OCTOBER_NOW));
+    await bootScenario(page, "appointmentsNoCancelled");
+    await seedSession(page, "CLINICIAN");
+    await list.goto();
+
+    await test.step("Upcoming: the Nov 3 row at 9:30 Los Angeles time reads 09:30 AM PST", async () => {
+      await list.openTab("Upcoming");
+      const link = list.rowLink(list.rowsIn(list.dayGroup("Tue, Nov 3")));
+      await expect(link).toHaveText("09:30 AM PST");
+      await expect(link).toHaveAttribute("href", `/appointments/${idOf(12)}`);
+    });
+
+    await test.step("Past: the Oct 8 row at 9:00 Los Angeles time reads 09:00 AM PDT", async () => {
+      await list.openTab("Past");
+      const link = list.rowLink(list.rowsIn(list.dayGroup("Thu, Oct 8")));
+      await expect(link).toHaveText("09:00 AM PDT");
+      await expect(link).toHaveAttribute("href", `/appointments/${idOf(13)}`);
     });
   });
 

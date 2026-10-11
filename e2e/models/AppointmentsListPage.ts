@@ -122,6 +122,11 @@ export class AppointmentsListPage {
     );
   }
 
+  /** The appointment rows of a day group (rows with a link; the header row has none). */
+  rowsIn(group: Locator): Locator {
+    return group.getByRole("row").filter({ has: this.page.getByRole("link") });
+  }
+
   /** The row in `group` whose link reads `time`, e.g. "10:00 AM PDT". */
   rowAt(group: Locator, time: string): Locator {
     return group

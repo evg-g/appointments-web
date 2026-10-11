@@ -92,6 +92,35 @@ test.describe("AURORA-8 appointments clinic filter", () => {
     });
   });
 
+  test("AC11.ui @agent-trusted an unknown ?clinic= id falls back to All clinics with every row and drops the parameter from the URL", async ({
+    page,
+    appointmentsList,
+  }) => {
+    // A well-formed id that is not a clinic, e.g. from an old link to a clinic since removed.
+    const UNKNOWN = "c0000000-0000-4000-8000-000000000000";
+    await seedSession(page, "PLATFORM_ADMIN");
+    await appointmentsList.goto(`?tab=past&clinic=${UNKNOWN}`);
+
+    await test.step("The filter shows All clinics and every tab has all rows at both clinics", async () => {
+      await expect(appointmentsList.clinicFilter).toBeVisible();
+      await expect.poll(() => appointmentsList.chosenClinic()).toBe(ALL);
+      await expectTabs(appointmentsList, ALL);
+    });
+
+    await test.step("The unknown clinic parameter is removed from the URL; ?tab= is kept", async () => {
+      await expect(page).not.toHaveURL(/[?&]clinic=/);
+      await expect(page).toHaveURL(/[?&]tab=/);
+    });
+
+    await test.step("A reload stays on All clinics with every row", async () => {
+      await page.reload();
+      await expect(appointmentsList.clinicFilter).toBeVisible();
+      await expect.poll(() => appointmentsList.chosenClinic()).toBe(ALL);
+      await expect(page).not.toHaveURL(/[?&]clinic=/);
+      await expectTabs(appointmentsList, ALL);
+    });
+  });
+
   test("AC11.ui @agent-trusted with ?clinic= and the clinics failing the list shows the error state with retry, not All clinics", async ({
     page,
     appointmentsList,
