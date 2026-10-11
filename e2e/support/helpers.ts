@@ -11,6 +11,7 @@ import {
   ONLY_CANCELLED_APPOINTMENTS,
   RIVERSIDE_CLINIC_ID,
   TWO_CLINICS_APPOINTMENTS,
+  UNEQUAL_TABS_APPOINTMENTS,
 } from "../../src/mocks/appointmentsEveryStatus";
 
 export { EVERY_STATUS_NOW, OCTOBER_NOW, RIVERSIDE_CLINIC_ID };
@@ -58,6 +59,7 @@ export type ScenarioName =
   | "appointmentsNoCancelled"
   | "appointmentsOnlyCancelled"
   | "appointmentsTwoClinics"
+  | "appointmentsUnequalTabs"
   | "appointmentsManyPages"
   | "clinicsError"
   | "clinicsManyPages"
@@ -211,6 +213,9 @@ async function routeScenario(page: Page, name: ScenarioName): Promise<void> {
       break;
     case "appointmentsTwoClinics":
       await routeAppointmentList(page, TWO_CLINICS_APPOINTMENTS);
+      break;
+    case "appointmentsUnequalTabs":
+      await routeAppointmentList(page, UNEQUAL_TABS_APPOINTMENTS);
       break;
     case "appointmentsManyPages":
       await routeAppointmentList(page, MANY_PAGES_APPOINTMENTS);

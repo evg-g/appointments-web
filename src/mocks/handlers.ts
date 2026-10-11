@@ -9,6 +9,7 @@ import {
   NO_CANCELLED_APPOINTMENTS,
   ONLY_CANCELLED_APPOINTMENTS,
   TWO_CLINICS_APPOINTMENTS,
+  UNEQUAL_TABS_APPOINTMENTS,
 } from "./appointmentsEveryStatus";
 import { problem, SEED_ACCOUNTS } from "./data";
 import type { TokenResponse, UserOut } from "./data";
@@ -708,6 +709,15 @@ export const scenarios = {
     http.get("/api/v1/appointments", () =>
       HttpResponse.json({
         data: ONLY_CANCELLED_APPOINTMENTS,
+        page: { has_more: false, next_cursor: null },
+      }),
+    ),
+
+  /** Tabs with different counts (staff 3/2/1/0), around OCTOBER_NOW (the AURORA-8 tab counts). */
+  appointmentsUnequalTabs: () =>
+    http.get("/api/v1/appointments", () =>
+      HttpResponse.json({
+        data: UNEQUAL_TABS_APPOINTMENTS,
         page: { has_more: false, next_cursor: null },
       }),
     ),

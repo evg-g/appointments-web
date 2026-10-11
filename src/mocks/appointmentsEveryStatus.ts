@@ -79,6 +79,20 @@ export const ONLY_CANCELLED_APPOINTMENTS: AppointmentOut[] = [
 ];
 
 /**
+ * Tabs with different counts, so a tab wired to another tab's rows shows the wrong count: two
+ * CONFIRMED rows not started (Upcoming only), one REQUESTED row not started (Upcoming + Needs
+ * action) and one CONFIRMED row that has started (Needs action + Past), nothing cancelled. Served
+ * by the `appointmentsUnequalTabs` scenario; fix the clock to `OCTOBER_NOW`. Staff counts
+ * (Upcoming, Needs action, Past, Cancelled): 3/2/1/0.
+ */
+export const UNEQUAL_TABS_APPOINTMENTS: AppointmentOut[] = [
+  row(41, "2026-10-12T17:00:00Z", "CONFIRMED"), // Upcoming
+  row(42, "2026-10-14T17:00:00Z", "CONFIRMED"), // Upcoming
+  row(43, "2026-10-13T17:00:00Z", "REQUESTED"), // Upcoming + Needs action (to confirm)
+  row(44, "2026-10-08T17:00:00Z", "CONFIRMED"), // Past + Needs action (to complete)
+];
+
+/**
  * Rows at both seeded clinics in every tab, around `OCTOBER_NOW`, for the clinic filter. Served by
  * the `appointmentsTwoClinics` scenario. Staff counts (Upcoming, Needs action, Past, Cancelled):
  * all clinics 3/2/3/3, Aurora Downtown 1/0/1/1, Aurora Riverside 2/2/2/2.

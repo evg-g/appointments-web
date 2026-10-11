@@ -16,6 +16,7 @@ import { expect, test } from "../../support/fixtures";
 //   appointmentsEveryStatus   one appointment in every status (January, PST)
 //   appointmentsNoCancelled   rows on PDT and PST dates, nothing cancelled
 //   appointmentsOnlyCancelled only cancelled rows
+//   appointmentsUnequalTabs   Upcoming, Needs action and Past with different counts
 // All rows are at Aurora Downtown (America/Los_Angeles).
 
 const CLINIC = "Aurora Downtown";
@@ -60,6 +61,18 @@ const CASES: Case[] = [
       ["Upcoming", 2],
       ["Needs action", 2],
       ["Past", 3],
+      ["Cancelled", 0],
+    ],
+  },
+  {
+    // Upcoming and Needs action differ (3 vs 2), so a tab wired to the other's rows fails here.
+    scenario: "appointmentsUnequalTabs",
+    now: OCTOBER_NOW,
+    role: "CLINICIAN",
+    counts: [
+      ["Upcoming", 3],
+      ["Needs action", 2],
+      ["Past", 1],
       ["Cancelled", 0],
     ],
   },
