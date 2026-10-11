@@ -38,6 +38,11 @@ export class AppointmentsListPage {
     this.loadMoreButton = page.getByRole("button", { name: "Load more" });
   }
 
+  /** Every option of the clinic filter, "All clinics" first. */
+  get clinicOptions(): Locator {
+    return this.clinicFilter.getByRole("option");
+  }
+
   /** Choose a clinic by its name ("All clinics" or e.g. "Aurora Downtown") in the clinic filter. */
   async filterByClinic(name: string): Promise<void> {
     await this.clinicFilter.selectOption({ label: name });

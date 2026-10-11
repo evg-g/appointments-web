@@ -4,6 +4,7 @@ import type { components } from "@/api/schema";
 
 import {
   EVERY_STATUS_APPOINTMENTS,
+  MANY_CLINICS,
   MANY_PAGES_APPOINTMENTS,
   NO_CANCELLED_APPOINTMENTS,
   ONLY_CANCELLED_APPOINTMENTS,
@@ -745,6 +746,12 @@ export const scenarios = {
       HttpResponse.json(problem(500, "Internal Server Error", "Unexpected error."), {
         status: 500,
       }),
+    ),
+
+  /** 60 clinics paged by limit/cursor, more than one page of 50; Riverside is 55th (AURORA-8). */
+  clinicsManyPages: () =>
+    http.get("/api/v1/clinics", ({ request }) =>
+      HttpResponse.json(paginate(MANY_CLINICS, new URL(request.url))),
     ),
 
   devicesError: () =>

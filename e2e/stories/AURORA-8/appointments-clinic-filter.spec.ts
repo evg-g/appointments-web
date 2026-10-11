@@ -1,5 +1,5 @@
 import type { AppointmentsListPage, AppointmentsTab } from "../../models";
-import { bootScenario, OCTOBER_NOW, seedSession } from "../../support/helpers";
+import { bootScenario, OCTOBER_NOW, RIVERSIDE_CLINIC_ID, seedSession } from "../../support/helpers";
 import { expect, test } from "../../support/fixtures";
 
 // AURORA-8: a clinic filter ("All clinics" + each clinic) limits every tab to one clinic, the tab
@@ -89,6 +89,56 @@ test.describe("AURORA-8 appointments clinic filter", () => {
       await expect(page).toHaveURL(/[?&]tab=/);
       await expect.poll(() => appointmentsList.chosenClinic()).toBe(ALL);
       await expectTabs(appointmentsList, ALL);
+    });
+  });
+
+  test("AC11.ui @agent-trusted with ?clinic= and the clinics failing the list shows the error state with retry, not All clinics", async ({
+    page,
+    appointmentsList,
+  }) => {
+    await bootScenario(page, "clinicsError");
+    await seedSession(page, "PLATFORM_ADMIN");
+    await appointmentsList.goto(`?clinic=${RIVERSIDE_CLINIC_ID}`);
+
+    await test.step("GET /api/v1/clinics is 500: the error state with Try again, no filter, no tabs, no rows", async () => {
+      // Wait until the list settles on one outcome: the error state, or the filter with rows.
+      await expect(appointmentsList.errorState.or(appointmentsList.clinicFilter)).toBeVisible();
+      await expect(appointmentsList.clinicFilter).toHaveCount(0);
+      await expect(appointmentsList.tablist).toHaveCount(0);
+      await expect(appointmentsList.rows).toHaveCount(0);
+      await expect(appointmentsList.errorState).toBeVisible();
+      await expect(appointmentsList.retryButton).toBeEnabled();
+      await expect(page).toHaveURL(new RegExp(`[?&]clinic=${RIVERSIDE_CLINIC_ID}(&|$)`));
+    });
+
+    await test.step("Try again while the clinics still fail: still the error state and ?clinic= kept", async () => {
+      await appointmentsList.retryButton.click();
+      await expect(appointmentsList.errorState).toBeVisible();
+      await expect(appointmentsList.clinicFilter).toHaveCount(0);
+      await expect(appointmentsList.rows).toHaveCount(0);
+      await expect(page).toHaveURL(new RegExp(`[?&]clinic=${RIVERSIDE_CLINIC_ID}(&|$)`));
+    });
+  });
+
+  test("AC11.ui @agent-trusted with more than one page of clinics ?clinic= of a clinic past the first 50 keeps it chosen and filters the rows", async ({
+    page,
+    appointmentsList,
+  }) => {
+    // 60 clinics, 50 per page; Aurora Riverside is 55th, so it is only on the second page.
+    await bootScenario(page, "clinicsManyPages");
+    await seedSession(page, "PLATFORM_ADMIN");
+    await appointmentsList.goto(`?clinic=${RIVERSIDE_CLINIC_ID}`);
+
+    await test.step("The select lists every clinic and Aurora Riverside is chosen", async () => {
+      await expect(appointmentsList.clinicFilter).toBeVisible();
+      await expect(appointmentsList.clinicOptions).toHaveCount(61);
+      expect(await appointmentsList.clinicOptionValue(RIVERSIDE)).toBe(RIVERSIDE_CLINIC_ID);
+      await expect.poll(() => appointmentsList.chosenClinic()).toBe(RIVERSIDE);
+      await expect(page).toHaveURL(new RegExp(`[?&]clinic=${RIVERSIDE_CLINIC_ID}(&|$)`));
+    });
+
+    await test.step("Every tab shows only Aurora Riverside rows and its counts", async () => {
+      await expectTabs(appointmentsList, RIVERSIDE);
     });
   });
 });

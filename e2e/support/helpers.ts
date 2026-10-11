@@ -4,14 +4,16 @@ import { AppointmentPage, BookingWizardPage, DashboardPage, LoginPage } from "..
 import {
   EVERY_STATUS_APPOINTMENTS,
   EVERY_STATUS_NOW,
+  MANY_CLINICS,
   MANY_PAGES_APPOINTMENTS,
   NO_CANCELLED_APPOINTMENTS,
   OCTOBER_NOW,
   ONLY_CANCELLED_APPOINTMENTS,
+  RIVERSIDE_CLINIC_ID,
   TWO_CLINICS_APPOINTMENTS,
 } from "../../src/mocks/appointmentsEveryStatus";
 
-export { EVERY_STATUS_NOW, OCTOBER_NOW };
+export { EVERY_STATUS_NOW, OCTOBER_NOW, RIVERSIDE_CLINIC_ID };
 
 /**
  * Shared helpers for the browser test tiers.
@@ -58,6 +60,7 @@ export type ScenarioName =
   | "appointmentsTwoClinics"
   | "appointmentsManyPages"
   | "clinicsError"
+  | "clinicsManyPages"
   | "devicesError"
   | "acknowledgeFails";
 
@@ -140,13 +143,13 @@ async function fulfillProblem(
 }
 
 /**
- * Composed mode: serve `rows` as the appointments list (GET /api/v1/appointments only), paged by
- * the request's `limit` and `cursor` (an offset) like the MSW backend.
+ * Composed mode: serve `rows` as the list at `path` (GET only, e.g. "/api/v1/appointments"), paged
+ * by the request's `limit` and `cursor` (an offset) like the MSW backend.
  */
-async function routeAppointmentList(page: Page, rows: readonly unknown[]): Promise<void> {
-  await page.route("**/api/v1/appointments**", async (route) => {
+async function routePagedList(page: Page, path: string, rows: readonly unknown[]): Promise<void> {
+  await page.route(`**${path}**`, async (route) => {
     const url = new URL(route.request().url());
-    if (route.request().method() === "GET" && url.pathname === "/api/v1/appointments") {
+    if (route.request().method() === "GET" && url.pathname === path) {
       const limit = Number(url.searchParams.get("limit") ?? "50");
       const offset = Number(url.searchParams.get("cursor") ?? "0");
       const next = offset + limit;
@@ -161,6 +164,11 @@ async function routeAppointmentList(page: Page, rows: readonly unknown[]): Promi
       });
     } else await route.fallback();
   });
+}
+
+/** Composed mode: serve `rows` as the appointments list, paged like the MSW backend. */
+async function routeAppointmentList(page: Page, rows: readonly unknown[]): Promise<void> {
+  await routePagedList(page, "/api/v1/appointments", rows);
 }
 
 /**
@@ -213,6 +221,9 @@ async function routeScenario(page: Page, name: ScenarioName): Promise<void> {
           await fulfillProblem(route, 500, "Internal Server Error", "Unexpected error.");
         } else await route.fallback();
       });
+      break;
+    case "clinicsManyPages":
+      await routePagedList(page, "/api/v1/clinics", MANY_CLINICS);
       break;
     case "devicesError":
       await page.route("**/api/v1/devices**", async (route) => {

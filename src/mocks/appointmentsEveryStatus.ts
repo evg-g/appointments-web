@@ -1,6 +1,7 @@
 import type { components } from "../api/schema";
 
 type AppointmentOut = components["schemas"]["AppointmentOut"];
+type ClinicOut = components["schemas"]["ClinicOut"];
 
 /**
  * A fixed list of appointments in every status around a fixed "now", for the E2E specs of the
@@ -12,6 +13,9 @@ export const EVERY_STATUS_NOW = "2026-01-04T18:00:00Z";
 
 const CLINIC = "c1111111-1111-4111-8111-000000000001"; // Aurora Downtown (CLINIC_A)
 const RIVERSIDE = "c2222222-2222-4222-8222-000000000002"; // Aurora Riverside (CLINIC_B)
+
+/** The id of Aurora Riverside (CLINIC_B), for specs that open the list with `?clinic=<id>`. */
+export const RIVERSIDE_CLINIC_ID = RIVERSIDE;
 const CLINICIAN = "d1111111-1111-4111-8111-000000000001"; // CLINICIAN_1
 const SERVICE = "e1111111-1111-4111-8111-000000000001"; // SERVICE_30
 const PATIENT = "11111111-1111-4111-8111-111111111111"; // patient@aurora.test
@@ -112,4 +116,38 @@ export const MANY_PAGES_APPOINTMENTS: AppointmentOut[] = Array.from({ length: 15
   const status: AppointmentOut["status"] =
     i < 12 ? (i % 2 === 0 ? "CONFIRMED" : "REQUESTED") : (STARTED_CYCLE[i % 4] ?? "COMPLETED");
   return row(100 + i, startsAt, status, status === "CANCELLED" ? "Rescheduled" : null);
+});
+
+/**
+ * 60 clinics, more than one page of 50, for the clinic filter. Aurora Downtown is first and Aurora
+ * Riverside is 55th (on the second page); the rest are "Aurora Satellite NN". Served paged by
+ * `limit`/`cursor` by the `clinicsManyPages` scenario; pair it with `appointmentsTwoClinics`.
+ */
+export const MANY_CLINICS: ClinicOut[] = Array.from({ length: 60 }, (_, i): ClinicOut => {
+  if (i === 0) {
+    return {
+      id: CLINIC,
+      name: "Aurora Downtown",
+      address: "100 Market St, San Francisco",
+      timezone: "America/Los_Angeles",
+      cancellation_cutoff_hours: 24,
+    };
+  }
+  if (i === 54) {
+    return {
+      id: RIVERSIDE,
+      name: "Aurora Riverside",
+      address: "9 Riverside Ave, Portland",
+      timezone: "America/Los_Angeles",
+      cancellation_cutoff_hours: 12,
+    };
+  }
+  const n = String(i).padStart(2, "0");
+  return {
+    id: `c9999999-9999-4999-8999-0000000000${n}`,
+    name: `Aurora Satellite ${n}`,
+    address: `${n} Satellite Rd, Sacramento`,
+    timezone: "America/Los_Angeles",
+    cancellation_cutoff_hours: 24,
+  };
 });
