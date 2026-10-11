@@ -155,11 +155,11 @@ test.describe("AURORA-8 appointments list content", () => {
       await bootScenario(page, "appointmentsEmpty");
       await appointmentsList.goto();
       await expect(appointmentsList.emptyState).toBeVisible();
-      await expect(page.getByRole("link", { name: "Book appointment" })).toHaveCount(2);
+      await expect(appointmentsList.bookAppointmentLinks).toHaveCount(2);
       await expect(appointmentsList.tablist).toHaveCount(0);
       await expect(appointmentsList.tabs).toHaveCount(0);
       for (const message of Object.values(MESSAGES)) {
-        await expect(page.getByText(message, { exact: true })).toHaveCount(0);
+        await expect(appointmentsList.textOnPage(message)).toHaveCount(0);
       }
     });
   });

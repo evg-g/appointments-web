@@ -149,6 +149,26 @@ export class AppointmentsListPage {
     return this.panel.getByText(message, { exact: true });
   }
 
+  /** The tabs marked aria-selected="true" (exactly one when the tabs work). */
+  get selectedTabs(): Locator {
+    return this.tabs.and(this.page.locator('[aria-selected="true"]'));
+  }
+
+  /** The tabs in the tab order (tabindex="0"; exactly one under roving tabindex). */
+  get tabsInTabOrder(): Locator {
+    return this.tabs.and(this.page.locator('[tabindex="0"]'));
+  }
+
+  /** Every Book appointment link on the page (header action and any empty-state action). */
+  get bookAppointmentLinks(): Locator {
+    return this.page.getByRole("link", { name: "Book appointment" });
+  }
+
+  /** An exact text anywhere on the page, e.g. a tab's empty message outside any panel. */
+  textOnPage(message: string): Locator {
+    return this.page.getByText(message, { exact: true });
+  }
+
   /** The Book appointment action inside the open tab's panel. */
   get panelBookLink(): Locator {
     return this.panel.getByRole("link", { name: "Book appointment" });

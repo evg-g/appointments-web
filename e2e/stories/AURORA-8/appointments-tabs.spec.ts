@@ -91,9 +91,7 @@ test.describe("AURORA-8 appointments tabs", () => {
     await test.step("?tab=nonsense opens Upcoming", async () => {
       await appointmentsList.goto("?tab=nonsense");
       await expect(appointmentsList.tab("Upcoming")).toHaveAttribute("aria-selected", "true");
-      await expect(appointmentsList.tabs.and(page.locator('[aria-selected="true"]'))).toHaveCount(
-        1,
-      );
+      await expect(appointmentsList.selectedTabs).toHaveCount(1);
     });
   });
 
@@ -101,7 +99,7 @@ test.describe("AURORA-8 appointments tabs", () => {
     page,
     appointmentsList,
   }) => {
-    const { tabs, panel } = appointmentsList;
+    const { tabs, panel, selectedTabs, tabsInTabOrder } = appointmentsList;
     const tab = (name: AppointmentsTab) => appointmentsList.tab(name);
 
     /** The tab is focused, selected, the only tab in the tab order, and labels the panel. */
@@ -110,8 +108,8 @@ test.describe("AURORA-8 appointments tabs", () => {
       await expect(active).toBeFocused();
       await expect(active).toHaveAttribute("aria-selected", "true");
       await expect(active).toHaveAttribute("tabindex", "0");
-      await expect(tabs.and(page.locator('[aria-selected="true"]'))).toHaveCount(1);
-      await expect(tabs.and(page.locator('[tabindex="0"]'))).toHaveCount(1);
+      await expect(selectedTabs).toHaveCount(1);
+      await expect(tabsInTabOrder).toHaveCount(1);
       const tabId = await active.getAttribute("id");
       const panelId = await active.getAttribute("aria-controls");
       expect(tabId).toBeTruthy();
