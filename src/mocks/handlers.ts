@@ -2,6 +2,16 @@ import { http, HttpResponse } from "msw";
 
 import type { components } from "@/api/schema";
 
+import {
+  EVERY_STATUS_APPOINTMENTS,
+  MANY_CLINICS,
+  MANY_PAGES_APPOINTMENTS,
+  MANY_PAGES_TWO_CLINICS_APPOINTMENTS,
+  NO_CANCELLED_APPOINTMENTS,
+  ONLY_CANCELLED_APPOINTMENTS,
+  TWO_CLINICS_APPOINTMENTS,
+  UNEQUAL_TABS_APPOINTMENTS,
+} from "./appointmentsEveryStatus";
 import { problem, SEED_ACCOUNTS } from "./data";
 import type { TokenResponse, UserOut } from "./data";
 import {
@@ -677,6 +687,66 @@ export const scenarios = {
       HttpResponse.json({ data: [], page: { has_more: false, next_cursor: null } }),
     ),
 
+  /** A fixed list with every status around EVERY_STATUS_NOW (the AURORA-8 tab specs). */
+  appointmentsEveryStatus: () =>
+    http.get("/api/v1/appointments", () =>
+      HttpResponse.json({
+        data: EVERY_STATUS_APPOINTMENTS,
+        page: { has_more: false, next_cursor: null },
+      }),
+    ),
+
+  /** Rows in every tab but Cancelled, on PDT and PST dates, around OCTOBER_NOW (AURORA-8). */
+  appointmentsNoCancelled: () =>
+    http.get("/api/v1/appointments", () =>
+      HttpResponse.json({
+        data: NO_CANCELLED_APPOINTMENTS,
+        page: { has_more: false, next_cursor: null },
+      }),
+    ),
+
+  /** Only cancelled rows, around OCTOBER_NOW: every other tab is empty (AURORA-8). */
+  appointmentsOnlyCancelled: () =>
+    http.get("/api/v1/appointments", () =>
+      HttpResponse.json({
+        data: ONLY_CANCELLED_APPOINTMENTS,
+        page: { has_more: false, next_cursor: null },
+      }),
+    ),
+
+  /** Tabs with different counts (staff 3/2/1/0), around OCTOBER_NOW (the AURORA-8 tab counts). */
+  appointmentsUnequalTabs: () =>
+    http.get("/api/v1/appointments", () =>
+      HttpResponse.json({
+        data: UNEQUAL_TABS_APPOINTMENTS,
+        page: { has_more: false, next_cursor: null },
+      }),
+    ),
+
+  /** Rows at both seeded clinics in every tab, around OCTOBER_NOW (the AURORA-8 clinic filter). */
+  appointmentsTwoClinics: () =>
+    http.get("/api/v1/appointments", () =>
+      HttpResponse.json({
+        data: TWO_CLINICS_APPOINTMENTS,
+        page: { has_more: false, next_cursor: null },
+      }),
+    ),
+
+  /** 150 rows paged by limit/cursor, more than one page of 100, around OCTOBER_NOW (AURORA-8). */
+  appointmentsManyPages: () =>
+    http.get("/api/v1/appointments", ({ request }) =>
+      HttpResponse.json(paginate(MANY_PAGES_APPOINTMENTS, new URL(request.url))),
+    ),
+
+  /**
+   * 150 rows at both seeded clinics paged by limit/cursor, more than one page of 100, around
+   * OCTOBER_NOW: both clinics have rows on page 2 (AURORA-8, Load more with the clinic filter).
+   */
+  appointmentsManyPagesTwoClinics: () =>
+    http.get("/api/v1/appointments", ({ request }) =>
+      HttpResponse.json(paginate(MANY_PAGES_TWO_CLINICS_APPOINTMENTS, new URL(request.url))),
+    ),
+
   appointmentsError: () =>
     http.get("/api/v1/appointments", () =>
       HttpResponse.json(problem(500, "Internal Server Error", "Unexpected error."), {
@@ -696,6 +766,12 @@ export const scenarios = {
       HttpResponse.json(problem(500, "Internal Server Error", "Unexpected error."), {
         status: 500,
       }),
+    ),
+
+  /** 60 clinics paged by limit/cursor, more than one page of 50; Riverside is 55th (AURORA-8). */
+  clinicsManyPages: () =>
+    http.get("/api/v1/clinics", ({ request }) =>
+      HttpResponse.json(paginate(MANY_CLINICS, new URL(request.url))),
     ),
 
   devicesError: () =>

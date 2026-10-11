@@ -167,3 +167,48 @@ export function formatRelative(iso: string | null, now: Date = new Date()): stri
   if (days < 7) return `${String(days)}d ago`;
   return formatDate(iso);
 }
+
+/** Calendar day `YYYY-MM-DD` of the instant `iso` on the wall clock in `timeZone` (runtime zone when omitted). */
+export function dayKey(iso: string | number | Date, timeZone?: string): string {
+  const parts = new Intl.DateTimeFormat(
+    "en-US",
+    opts(timeZone, { year: "numeric", month: "2-digit", day: "2-digit" }),
+  ).formatToParts(new Date(iso));
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+/** The `YYYY-MM-DD` key one calendar day after `key`. */
+function nextDayKey(key: string): string {
+  const [year = 1970, month = 1, day = 1] = key.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + 1)).toISOString().slice(0, 10);
+}
+
+/**
+ * Day group heading for the instant `iso` in `timeZone`: "Today · Tue, Oct 6", "Tomorrow · Wed,
+ * Oct 7" or "Thu, Oct 8", with the year added when it is not the current year. Today and Tomorrow
+ * are judged on the wall clock in `timeZone`, not the viewer's. Always en-US so it reads the same
+ * everywhere.
+ */
+export function formatDayHeading(
+  iso: string,
+  timeZone: string | undefined,
+  now: number | Date,
+): string {
+  const key = dayKey(iso, timeZone);
+  const todayKey = dayKey(now, timeZone);
+  const sameYear = key.slice(0, 4) === todayKey.slice(0, 4);
+  const date = new Intl.DateTimeFormat(
+    "en-US",
+    opts(timeZone, {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      ...(sameYear ? {} : { year: "numeric" }),
+    }),
+  ).format(new Date(iso));
+  if (key === todayKey) return `Today · ${date}`;
+  if (key === nextDayKey(todayKey)) return `Tomorrow · ${date}`;
+  return date;
+}

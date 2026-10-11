@@ -1,6 +1,21 @@
 import { expect, type Page, type Route } from "@playwright/test";
 
 import { AppointmentPage, BookingWizardPage, DashboardPage, LoginPage } from "../models";
+import {
+  EVERY_STATUS_APPOINTMENTS,
+  EVERY_STATUS_NOW,
+  MANY_CLINICS,
+  MANY_PAGES_APPOINTMENTS,
+  MANY_PAGES_TWO_CLINICS_APPOINTMENTS,
+  NO_CANCELLED_APPOINTMENTS,
+  OCTOBER_NOW,
+  ONLY_CANCELLED_APPOINTMENTS,
+  RIVERSIDE_CLINIC_ID,
+  TWO_CLINICS_APPOINTMENTS,
+  UNEQUAL_TABS_APPOINTMENTS,
+} from "../../src/mocks/appointmentsEveryStatus";
+
+export { EVERY_STATUS_NOW, OCTOBER_NOW, RIVERSIDE_CLINIC_ID };
 
 /**
  * Shared helpers for the browser test tiers.
@@ -41,7 +56,15 @@ export type ScenarioName =
   | "bookingConflict"
   | "appointmentsError"
   | "appointmentsEmpty"
+  | "appointmentsEveryStatus"
+  | "appointmentsNoCancelled"
+  | "appointmentsOnlyCancelled"
+  | "appointmentsTwoClinics"
+  | "appointmentsUnequalTabs"
+  | "appointmentsManyPages"
+  | "appointmentsManyPagesTwoClinics"
   | "clinicsError"
+  | "clinicsManyPages"
   | "devicesError"
   | "acknowledgeFails";
 
@@ -124,6 +147,35 @@ async function fulfillProblem(
 }
 
 /**
+ * Composed mode: serve `rows` as the list at `path` (GET only, e.g. "/api/v1/appointments"), paged
+ * by the request's `limit` and `cursor` (an offset) like the MSW backend.
+ */
+async function routePagedList(page: Page, path: string, rows: readonly unknown[]): Promise<void> {
+  await page.route(`**${path}**`, async (route) => {
+    const url = new URL(route.request().url());
+    if (route.request().method() === "GET" && url.pathname === path) {
+      const limit = Number(url.searchParams.get("limit") ?? "50");
+      const offset = Number(url.searchParams.get("cursor") ?? "0");
+      const next = offset + limit;
+      const hasMore = next < rows.length;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: rows.slice(offset, next),
+          page: { has_more: hasMore, next_cursor: hasMore ? String(next) : null },
+        }),
+      });
+    } else await route.fallback();
+  });
+}
+
+/** Composed mode: serve `rows` as the appointments list, paged like the MSW backend. */
+async function routeAppointmentList(page: Page, rows: readonly unknown[]): Promise<void> {
+  await routePagedList(page, "/api/v1/appointments", rows);
+}
+
+/**
  * Composed mode: force a named error scenario at the network layer with page.route(), the real-stack
  * equivalent of the MSW `scenarios` map. Each route matches only its own endpoint and falls back for
  * everything else, so auth/me hydration and unrelated calls still hit the real API.
@@ -152,12 +204,36 @@ async function routeScenario(page: Page, name: ScenarioName): Promise<void> {
         } else await route.fallback();
       });
       break;
+    case "appointmentsEveryStatus":
+      await routeAppointmentList(page, EVERY_STATUS_APPOINTMENTS);
+      break;
+    case "appointmentsNoCancelled":
+      await routeAppointmentList(page, NO_CANCELLED_APPOINTMENTS);
+      break;
+    case "appointmentsOnlyCancelled":
+      await routeAppointmentList(page, ONLY_CANCELLED_APPOINTMENTS);
+      break;
+    case "appointmentsTwoClinics":
+      await routeAppointmentList(page, TWO_CLINICS_APPOINTMENTS);
+      break;
+    case "appointmentsUnequalTabs":
+      await routeAppointmentList(page, UNEQUAL_TABS_APPOINTMENTS);
+      break;
+    case "appointmentsManyPages":
+      await routeAppointmentList(page, MANY_PAGES_APPOINTMENTS);
+      break;
+    case "appointmentsManyPagesTwoClinics":
+      await routeAppointmentList(page, MANY_PAGES_TWO_CLINICS_APPOINTMENTS);
+      break;
     case "clinicsError":
       await page.route("**/api/v1/clinics**", async (route) => {
         if (route.request().method() === "GET") {
           await fulfillProblem(route, 500, "Internal Server Error", "Unexpected error.");
         } else await route.fallback();
       });
+      break;
+    case "clinicsManyPages":
+      await routePagedList(page, "/api/v1/clinics", MANY_CLINICS);
       break;
     case "devicesError":
       await page.route("**/api/v1/devices**", async (route) => {
