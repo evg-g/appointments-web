@@ -49,10 +49,17 @@ export function Tabs<T extends string>({
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const count = items.length;
     if (count === 0) return;
-    const current = Math.max(
-      0,
-      items.findIndex((item) => item.value === value),
-    );
+    // Start from the tab that has focus, not from `value`: moveTo focuses the new tab at once, but
+    // `value` only changes after the caller re-renders, so a second quick key press would
+    // otherwise start from the old tab.
+    const focused = items.findIndex((item) => tabRefs.current.get(item.value) === event.target);
+    const current =
+      focused !== -1
+        ? focused
+        : Math.max(
+            0,
+            items.findIndex((item) => item.value === value),
+          );
     let next: number;
     switch (event.key) {
       case "ArrowRight":

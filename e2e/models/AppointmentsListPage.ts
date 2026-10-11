@@ -78,6 +78,14 @@ export class AppointmentsListPage {
     return texts.map((text) => text.replace(/\s*\(\d+\)\s*$/, "").trim());
   }
 
+  /**
+   * Press keys on the focused element back-to-back, with no wait between them: every key is sent
+   * before the page gets a chance to re-render, like a user who taps a key twice quickly.
+   */
+  async pressKeysAtOnce(...keys: string[]): Promise<void> {
+    await Promise.all(keys.map((key) => this.page.keyboard.press(key)));
+  }
+
   /** Click a tab and wait until it is the selected one. */
   async openTab(name: AppointmentsTab): Promise<void> {
     await this.tab(name).click();

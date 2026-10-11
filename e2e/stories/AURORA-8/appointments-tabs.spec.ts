@@ -161,4 +161,36 @@ test.describe("AURORA-8 appointments tabs", () => {
       expect(results.violations, `axe violations on /appointments:\n${summary}`).toEqual([]);
     });
   });
+
+  test("AC12.component @agent-trusted fast arrow keys move from the focused tab, not the last rendered value", async ({
+    page,
+    appointmentsList,
+  }) => {
+    const tab = (name: AppointmentsTab) => appointmentsList.tab(name);
+    const expectActive = async (name: AppointmentsTab) => {
+      await expect(tab(name)).toBeFocused();
+      await expect(tab(name)).toHaveAttribute("aria-selected", "true");
+      await expect(appointmentsList.selectedTabs).toHaveCount(1);
+    };
+
+    await seedSession(page, "CLINICIAN");
+
+    await test.step("From Upcoming, ArrowRight twice with no pause: Past is focused, selected and in the URL", async () => {
+      await appointmentsList.goto();
+      await tab("Upcoming").focus();
+      await expectActive("Upcoming");
+      await appointmentsList.pressKeysAtOnce("ArrowRight", "ArrowRight");
+      await expectActive("Past");
+      await expect(page).toHaveURL(/[?&]tab=past(&|$)/);
+    });
+
+    await test.step("From Upcoming, ArrowRight then ArrowLeft with no pause: Upcoming is focused and selected", async () => {
+      await appointmentsList.goto();
+      await tab("Upcoming").focus();
+      await expectActive("Upcoming");
+      await appointmentsList.pressKeysAtOnce("ArrowRight", "ArrowLeft");
+      await expectActive("Upcoming");
+      await expect(page).toHaveURL(/[?&]tab=upcoming(&|$)/);
+    });
+  });
 });
