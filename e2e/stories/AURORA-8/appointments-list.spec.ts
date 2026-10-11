@@ -236,3 +236,42 @@ test.describe("AURORA-8 appointments list content", () => {
     });
   });
 });
+
+test.describe("AURORA-8 appointments list when clinic zones are unknown", () => {
+  test("AC10.ui @agent-trusted when the clinics fail to load the list shows the error state with retry and no row with a zone-less time", async ({
+    page,
+    appointmentsList,
+  }) => {
+    const list = appointmentsList;
+    const clinicRequests: string[] = [];
+    page.on("request", (request) => {
+      if (new URL(request.url()).pathname === "/api/v1/clinics") clinicRequests.push(request.url());
+    });
+
+    await page.clock.setFixedTime(new Date(OCTOBER_NOW));
+    await bootScenario(page, "appointmentsNoCancelled");
+    await bootScenario(page, "clinicsError");
+    await seedSession(page, "CLINICIAN");
+    await list.goto();
+
+    await test.step("GET /api/v1/clinics is 500: the error state with Try again, no tabs, no rows", async () => {
+      // Wait until the list settles on one outcome: the error state, or rows with times.
+      await expect(list.errorState.or(list.timeLinks.first())).toBeVisible();
+      // No time is shown while its clinic zone is unknown (so none without its zone).
+      await expect(list.timeLinks).toHaveCount(0);
+      await expect(list.rows).toHaveCount(0);
+      await expect(list.dayHeadings).toHaveCount(0);
+      await expect(list.tablist).toHaveCount(0);
+      await expect(list.errorState).toBeVisible();
+      await expect(list.retryButton).toBeEnabled();
+    });
+
+    await test.step("Try again asks for the clinics again", async () => {
+      const before = clinicRequests.length;
+      await list.retryButton.click();
+      await expect.poll(() => clinicRequests.length).toBeGreaterThan(before);
+      await expect(list.errorState).toBeVisible();
+      await expect(list.timeLinks).toHaveCount(0);
+    });
+  });
+});

@@ -14,6 +14,10 @@ export class AppointmentsListPage {
   readonly panel: Locator;
   readonly bookLink: Locator;
   readonly retryButton: Locator;
+  /** The designed error state (an alert with a Try again button). */
+  readonly errorState: Locator;
+  /** Any link that reads as a time, with or without a zone, e.g. "10:00 AM" or "10:00 AM PDT". */
+  readonly timeLinks: Locator;
   readonly emptyState: Locator;
   /** The "Clinic" select: "All clinics" and each clinic. */
   readonly clinicFilter: Locator;
@@ -24,6 +28,8 @@ export class AppointmentsListPage {
     this.heading = page.getByRole("heading", { level: 1, name: "Appointments" });
     this.bookLink = page.getByRole("link", { name: /book/i }).first();
     this.retryButton = page.getByRole("button", { name: /retry|try again/i });
+    this.errorState = page.getByRole("alert").filter({ has: this.retryButton });
+    this.timeLinks = page.getByRole("link", { name: /^\d{1,2}:\d{2}( [AP]M)?/ });
     this.emptyState = page.getByText(/no appointments yet/i);
     this.tablist = page.getByRole("tablist", { name: "Appointments" });
     this.tabs = this.tablist.getByRole("tab");

@@ -265,5 +265,23 @@ describe("groupByDay", () => {
       "2026-10-08",
       "2027-01-05",
     ]);
+
+    // Today and Tomorrow are judged in the clinic zone, not the viewer's (Vitest runs in UTC).
+    // Now is Tue Oct 6 22:00 in Los Angeles, which is already Wed Oct 7 05:00 in UTC.
+    const lateNow = Date.parse("2026-10-07T05:00:00Z");
+    const lateRows = [
+      // 2026-10-06 23:30 LA (Oct 7 in UTC): still Today for the LA clinic.
+      appt("la-today-2330", Date.parse("2026-10-07T06:30:00Z"), "CONFIRMED"),
+      // 2026-10-07 09:00 LA: Tomorrow for the LA clinic, though it is Today in UTC.
+      appt("la-tomorrow-09", Date.parse("2026-10-07T16:00:00Z"), "CONFIRMED"),
+      // 2026-10-08 12:00 LA: a dated heading, though it is Tomorrow in UTC.
+      appt("la-thu", Date.parse("2026-10-08T19:00:00Z"), "CONFIRMED"),
+    ];
+    const lateGroups = groupByDay(lateRows, (a) => zoneOf.get(a.id), lateNow);
+    expect(lateGroups.map((g) => ({ label: g.label, ids: ids(g.rows) }))).toEqual([
+      { label: "Today · Tue, Oct 6", ids: ["la-today-2330"] },
+      { label: "Tomorrow · Wed, Oct 7", ids: ["la-tomorrow-09"] },
+      { label: "Thu, Oct 8", ids: ["la-thu"] },
+    ]);
   });
 });

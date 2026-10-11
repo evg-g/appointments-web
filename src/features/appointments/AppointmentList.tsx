@@ -1,9 +1,8 @@
 import { CalendarPlus } from "lucide-react";
-import { useId, useMemo } from "react";
+import { useId } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { flattenAppointments, useAppointments } from "@/api/hooks";
-import { flattenClinics, useClinics } from "@/api/hooks";
 import type { AppointmentOut, UserRole } from "@/api/types";
 import { useAuth } from "@/auth/useAuth";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -32,7 +31,7 @@ import {
   partitionAppointments,
 } from "./appointmentGroups";
 import { STATUS_LABEL, STATUS_VARIANT } from "./status";
-import { useClinicTimeZones } from "./useClinicTimeZones";
+import { useClinicDirectory } from "./useClinicTimeZones";
 
 /** The `?tab=` values of the list, in display order. */
 type ListTab = "upcoming" | "needs-action" | "past" | "cancelled";
@@ -116,20 +115,16 @@ export function AppointmentList() {
     );
   };
   const query = useAppointments({ limit: PAGE_LIMIT });
-  const clinicsQuery = useClinics();
-  const clinics = useMemo(() => flattenClinics(clinicsQuery.data), [clinicsQuery.data]);
-  const clinicNames = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const clinic of clinics) map.set(clinic.id, clinic.name);
-    return map;
-  }, [clinics]);
-  const clinicTimeZones = useClinicTimeZones();
+  // Rows are shown in their clinic's zone, so the list waits for the clinics (skeleton) and shows
+  // the error state with retry when they fail, rather than guessing the viewer's zone.
+  const clinicDirectory = useClinicDirectory();
+  const { clinics, names: clinicNames, timeZones: clinicTimeZones } = clinicDirectory;
 
   // The clinic filter from `?clinic=`. An id that is not a known clinic (once the clinics have
   // loaded) means All clinics, so a stale link does not hide every row.
   const clinicParam = searchParams.get("clinic") ?? "";
   const clinicId =
-    clinicParam !== "" && (clinicsQuery.isPending || clinicNames.has(clinicParam))
+    clinicParam !== "" && (clinicDirectory.isPending || clinicNames.has(clinicParam))
       ? clinicParam
       : "";
 
@@ -161,12 +156,15 @@ export function AppointmentList() {
 
       <QueryBoundary
         query={{
-          isPending: query.isPending,
-          isError: query.isError,
-          error: query.error,
+          isPending: query.isPending || clinicDirectory.isPending,
+          isError: query.isError || clinicDirectory.isError,
+          error: query.isError ? query.error : clinicDirectory.error,
           data: appointments,
-          isFetching: query.isFetching,
-          refetch: query.refetch,
+          isFetching: query.isFetching || clinicDirectory.isFetching,
+          refetch: () => {
+            if (query.isError) void query.refetch();
+            if (clinicDirectory.isError) void clinicDirectory.refetch();
+          },
         }}
         isEmpty={(rows) => rows.length === 0}
         empty={
